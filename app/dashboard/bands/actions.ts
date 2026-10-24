@@ -75,6 +75,8 @@ export async function updateBand(
 
   const name = String(formData.get("name") ?? "").trim();
   const homeCity = String(formData.get("home_city") ?? "").trim();
+  const homeCityLatRaw = String(formData.get("home_city_lat") ?? "").trim();
+  const homeCityLngRaw = String(formData.get("home_city_lng") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim() || null;
   const spotifyUrl = String(formData.get("spotify_url") ?? "").trim() || null;
   const youtubeUrl = String(formData.get("youtube_url") ?? "").trim() || null;
@@ -94,11 +96,25 @@ export async function updateBand(
     .slice(0, 6);
   const avgLocalDraw = avgDrawRaw === "" ? 0 : Math.max(0, Math.min(100000, Number(avgDrawRaw) || 0));
 
+  // Only persist coords when both are present and sane; otherwise null so
+  // typing a different city doesn't leave stale coordinates behind.
+  const homeCityLat = homeCityLatRaw ? Number(homeCityLatRaw) : NaN;
+  const homeCityLng = homeCityLngRaw ? Number(homeCityLngRaw) : NaN;
+  const coordsValid =
+    Number.isFinite(homeCityLat) &&
+    Number.isFinite(homeCityLng) &&
+    homeCityLat >= -90 &&
+    homeCityLat <= 90 &&
+    homeCityLng >= -180 &&
+    homeCityLng <= 180;
+
   const { error } = await supabase
     .from("bands")
     .update({
       name,
       home_city: homeCity,
+      home_city_lat: coordsValid ? homeCityLat : null,
+      home_city_lng: coordsValid ? homeCityLng : null,
       bio,
       genres,
       spotify_url: spotifyUrl,

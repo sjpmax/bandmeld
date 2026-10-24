@@ -3,6 +3,7 @@
 import { useActionState, useEffect } from "react";
 import { toast } from "sonner";
 import { updateBand } from "@/app/dashboard/bands/actions";
+import { HomeCityInput } from "@/components/bands/home-city-input";
 import type { ActionResult, Band } from "@/types";
 
 const initial: ActionResult = { ok: true };
@@ -27,13 +28,16 @@ export function BandSettingsForm({ band }: { band: Band }) {
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Home city
-        <input
-          name="home_city"
+        <HomeCityInput
           required
-          maxLength={60}
-          defaultValue={band.home_city}
-          className={input}
+          defaultCity={band.home_city}
+          defaultLat={band.home_city_lat}
+          defaultLng={band.home_city_lng}
+          inputClassName={input}
         />
+        <span className="text-xs opacity-60">
+          Pick from the dropdown to geocode — matters for the Bill Builder&apos;s home-radius filter.
+        </span>
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">

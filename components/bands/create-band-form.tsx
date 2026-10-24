@@ -4,6 +4,7 @@ import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createBand } from "@/app/dashboard/bands/actions";
 import { slugify } from "@/lib/slug";
+import { HomeCityInput } from "@/components/bands/home-city-input";
 import type { ActionResult } from "@/types";
 
 const initial: ActionResult<string> = { ok: true };
@@ -68,7 +69,10 @@ export function CreateBandForm() {
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Home city
-        <input name="home_city" required maxLength={60} className={input} placeholder="Phoenix, AZ" />
+        <HomeCityInput required inputClassName={input} />
+        <span className="text-xs opacity-60">
+          Pick from the dropdown so we can match you with bands and venues nearby.
+        </span>
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">
