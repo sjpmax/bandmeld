@@ -19,7 +19,11 @@ function rangeLabel(e: ReviewableEvent) {
 export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
   // Flat list of every event we show, serialized once as the hidden form payload.
   const allEvents: ReviewableEvent[] = useMemo(
-    () => [...payload.oneOffs, ...payload.recurringSeries.flatMap((s) => s.instances)],
+    () => [
+      ...payload.oneOffs,
+      ...payload.recurringSeries.flatMap((s) => s.instances),
+      ...payload.missed,
+    ],
     [payload],
   );
   const payloadJson = useMemo(() => JSON.stringify(allEvents), [allEvents]);
@@ -32,6 +36,7 @@ export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
   });
   // Which series panels are expanded.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [showMissed, setShowMissed] = useState(false);
 
   function toggleEvent(id: string, next: boolean) {
     setSelected((prev) => {
@@ -193,6 +198,55 @@ export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
           </ul>
         )}
       </section>
+
+      {/* "Did I miss one?" — events we skipped because Google marks them "free" */}
+      {payload.missed.length > 0 && (
+        <section className="flex flex-col gap-3">
+          <button
+            type="button"
+            onClick={() => setShowMissed((v) => !v)}
+            className="flex items-center justify-between gap-3 rounded-xl border border-dashed border-black/20 p-3 text-left dark:border-white/20"
+          >
+            <span>
+              <span className="font-semibold">Did I miss one?</span>
+              <span className="block text-sm opacity-70">
+                {payload.missed.length} event{payload.missed.length === 1 ? "" : "s"} you marked
+                &ldquo;free&rdquo; in Google — tap to rescue any real blocks.
+              </span>
+            </span>
+            <span className="text-sm underline opacity-70">{showMissed ? "Hide" : "Show"}</span>
+          </button>
+          {showMissed && (
+            <ul className="flex flex-col gap-2">
+              {payload.missed.map((e) => (
+                <li
+                  key={e.id}
+                  className="flex items-center gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
+                >
+                  <input
+                    type="checkbox"
+                    id={`miss-${e.id}`}
+                    name="selected"
+                    value={e.id}
+                    checked={selected.has(e.id)}
+                    onChange={(ev) => toggleEvent(e.id, ev.currentTarget.checked)}
+                    className="h-5 w-5"
+                  />
+                  <label htmlFor={`miss-${e.id}`} className="flex flex-1 flex-col">
+                    <span className="font-medium">{e.summary}</span>
+                    <span className="text-sm opacity-70">
+                      {rangeLabel(e)}
+                      {e.spanDays >= 2 && (
+                        <> · <span className="font-medium">{e.spanDays} days</span></>
+                      )}
+                    </span>
+                  </label>
+                </li>
+              ))}
+            </ul>
+          )}
+        </section>
+      )}
 
       <div className="sticky bottom-4 flex items-center justify-between gap-4 rounded-full border border-black/15 bg-paper/95 px-5 py-3 shadow-lg backdrop-blur dark:border-white/20 dark:bg-black/70">
         <span className="text-sm">

@@ -47,7 +47,7 @@ export function UnavailabilityForm() {
         </label>
       </div>
       <label className="flex flex-col gap-1.5 text-sm font-medium">
-        Reason (optional)
+        Reason (private)
         <input
           name="reason"
           type="text"
@@ -56,6 +56,27 @@ export function UnavailabilityForm() {
           className={input}
         />
       </label>
+
+      <fieldset className="flex flex-col gap-2">
+        <legend className="text-sm font-medium">How firm?</legend>
+        <div className="flex flex-wrap gap-2">
+          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-black/15 px-3 py-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent/10 dark:border-white/20">
+            <input type="radio" name="firmness" value="firm" defaultChecked />
+            <span>
+              <span className="font-medium">Firm</span>
+              <span className="block opacity-70">Band can&apos;t book me</span>
+            </span>
+          </label>
+          <label className="flex flex-1 cursor-pointer items-center gap-2 rounded-lg border border-black/15 px-3 py-2 text-sm has-[:checked]:border-accent has-[:checked]:bg-accent/10 dark:border-white/20">
+            <input type="radio" name="firmness" value="tentative" />
+            <span>
+              <span className="font-medium">Maybe</span>
+              <span className="block opacity-70">I&apos;d cancel for a show</span>
+            </span>
+          </label>
+        </div>
+      </fieldset>
+
       <button
         type="submit"
         disabled={pending}
@@ -64,7 +85,7 @@ export function UnavailabilityForm() {
         {pending ? "Saving…" : "Block these dates"}
       </button>
       <p className="text-xs opacity-60">
-        Your bandmates can see these blocks (including the reason). Band admins resync the band
+        Your reason stays private — bandmates only see the dates. Band admins resync the band
         calendar from the band page.
       </p>
     </form>

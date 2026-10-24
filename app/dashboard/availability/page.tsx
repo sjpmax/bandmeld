@@ -3,7 +3,11 @@ import Link from "next/link";
 import { createClient, requireUserId } from "@/utils/supabase/server";
 import { UnavailabilityForm } from "@/components/availability/unavailability-form";
 import { GoogleConnectButton } from "@/components/availability/google-connect-button";
-import { disconnectGoogleCalendar, removeUnavailability } from "./actions";
+import {
+  disconnectGoogleCalendar,
+  removeUnavailability,
+  setUnavailabilityTentative,
+} from "./actions";
 
 export const metadata: Metadata = { title: "My availability" };
 
@@ -46,7 +50,7 @@ export default async function MyAvailabilityPage({
     await Promise.all([
       supabase
         .from("member_unavailabilities")
-        .select("id, start_date, end_date, reason")
+        .select("id, start_date, end_date, reason, is_tentative")
         .eq("profile_id", userId)
         .gte("end_date", todayIso())
         .order("start_date", { ascending: true }),
@@ -133,19 +137,36 @@ export default async function MyAvailabilityPage({
                 key={b.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
               >
-                <div>
-                  <p className="font-medium">
-                    {b.start_date === b.end_date
-                      ? fmt(b.start_date)
-                      : `${fmt(b.start_date)} → ${fmt(b.end_date)}`}
+                <div className="flex-1 min-w-0">
+                  <p className="flex flex-wrap items-center gap-2 font-medium">
+                    <span>
+                      {b.start_date === b.end_date
+                        ? fmt(b.start_date)
+                        : `${fmt(b.start_date)} → ${fmt(b.end_date)}`}
+                    </span>
+                    {b.is_tentative && (
+                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+                        Maybe
+                      </span>
+                    )}
                   </p>
                   {b.reason && <p className="text-sm opacity-70">{b.reason}</p>}
                 </div>
-                <form action={removeUnavailability.bind(null, b.id)}>
-                  <button type="submit" className="text-sm text-red-600 hover:underline">
-                    Remove
-                  </button>
-                </form>
+                <div className="flex items-center gap-3">
+                  <form action={setUnavailabilityTentative.bind(null, b.id, !b.is_tentative)}>
+                    <button
+                      type="submit"
+                      className="text-sm opacity-70 hover:underline hover:opacity-100"
+                    >
+                      {b.is_tentative ? "Mark as firm" : "Switch to maybe"}
+                    </button>
+                  </form>
+                  <form action={removeUnavailability.bind(null, b.id)}>
+                    <button type="submit" className="text-sm text-red-600 hover:underline">
+                      Remove
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

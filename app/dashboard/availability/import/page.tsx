@@ -55,7 +55,12 @@ export default async function GoogleImportPage() {
         <p className="opacity-70">
           Pulled {total} busy event{total === 1 ? "" : "s"} from your primary calendar for the next
           12 months.
-          {payload.skippedCount > 0 && ` Skipped ${payload.skippedCount} (marked "free" or cancelled).`}
+          {payload.missed.length > 0 && ` ${payload.missed.length} more are tucked under "Did I miss one?"`}
+          {payload.skippedCount > 0 && ` Dropped ${payload.skippedCount} (cancelled or malformed).`}
+        </p>
+        <p className="text-xs opacity-60">
+          Imported events become firm blocks. Switch any to &ldquo;maybe&rdquo; from the availability
+          page afterward. Your reasons stay private — bandmates only see the dates.
         </p>
         <p className="text-sm">
           <Link href="/dashboard/availability" className="underline opacity-70 hover:opacity-100">

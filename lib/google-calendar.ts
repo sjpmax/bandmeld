@@ -153,6 +153,10 @@ export type ReviewSeries = {
 export type ReviewPayload = {
   oneOffs: ReviewableEvent[];
   recurringSeries: ReviewSeries[];
+  /** Events we would have shown but skipped because the user marked them
+   *  as "free" / "available" in Google Calendar. Offered as a rescue list. */
+  missed: ReviewableEvent[];
+  /** Count of events dropped for other reasons (cancelled, no times, etc). */
   skippedCount: number;
 };
 
@@ -204,18 +208,11 @@ function eventToRange(ev: GoogleEvent): { startDate: string; endDate: string; is
 export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
   let skippedCount = 0;
   const oneOffs: ReviewableEvent[] = [];
+  const missed: ReviewableEvent[] = [];
   const seriesMap = new Map<string, ReviewSeries>();
 
   for (const ev of events) {
-    if (ev.status === "cancelled") {
-      skippedCount++;
-      continue;
-    }
-    if (ev.transparency === "transparent") {
-      skippedCount++;
-      continue;
-    }
-    if (!ev.start || !ev.end) {
+    if (ev.status === "cancelled" || !ev.start || !ev.end) {
       skippedCount++;
       continue;
     }
@@ -238,6 +235,13 @@ export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
       preselect,
     };
 
+    // "transparent" = user marked themselves available anyway. Surface
+    // these in the "did I miss one?" bucket, off by default.
+    if (ev.transparency === "transparent") {
+      missed.push({ ...review, preselect: false });
+      continue;
+    }
+
     if (seriesId) {
       const existing = seriesMap.get(seriesId);
       if (existing) existing.instances.push(review);
@@ -253,11 +257,12 @@ export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
   }
 
   oneOffs.sort((a, b) => a.startDate.localeCompare(b.startDate));
+  missed.sort((a, b) => a.startDate.localeCompare(b.startDate));
   const recurringSeries = Array.from(seriesMap.values()).map((s) => ({
     ...s,
     instances: s.instances.sort((a, b) => a.startDate.localeCompare(b.startDate)),
   }));
   recurringSeries.sort((a, b) => a.summary.localeCompare(b.summary));
 
-  return { oneOffs, recurringSeries, skippedCount };
+  return { oneOffs, recurringSeries, missed, skippedCount };
 }

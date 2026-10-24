@@ -149,6 +149,7 @@ export type Database = {
           start_date: string;
           end_date: string;
           reason: string | null;
+          is_tentative: boolean;
           created_at: string | null;
         };
         Insert: {
@@ -157,6 +158,7 @@ export type Database = {
           start_date: string;
           end_date: string;
           reason?: string | null;
+          is_tentative?: boolean;
           created_at?: string | null;
         };
         Update: {
@@ -165,6 +167,7 @@ export type Database = {
           start_date?: string;
           end_date?: string;
           reason?: string | null;
+          is_tentative?: boolean;
           created_at?: string | null;
         };
         Relationships: [

@@ -14,6 +14,8 @@ export async function addUnavailability(
   const endDate = String(formData.get("end_date") ?? "");
   const reasonRaw = String(formData.get("reason") ?? "").trim();
   const reason = reasonRaw.length > 0 ? reasonRaw.slice(0, 120) : null;
+  // "tentative" when the firmness selector is "maybe".
+  const isTentative = String(formData.get("firmness") ?? "firm") === "tentative";
 
   if (!startDate || !endDate) {
     return { ok: false, error: "Start and end dates are required." };
@@ -33,12 +35,24 @@ export async function addUnavailability(
     start_date: startDate,
     end_date: endDate,
     reason,
+    is_tentative: isTentative,
   });
 
   if (error) return { ok: false, error: error.message };
 
   revalidatePath("/dashboard/availability");
-  return { ok: true, message: "Dates blocked." };
+  return { ok: true, message: isTentative ? "Marked as a maybe." : "Dates blocked." };
+}
+
+/** Flip an existing block between firm and tentative. */
+export async function setUnavailabilityTentative(id: string, tentative: boolean): Promise<void> {
+  const supabase = await createClient();
+  // RLS enforces ownership.
+  await supabase
+    .from("member_unavailabilities")
+    .update({ is_tentative: tentative })
+    .eq("id", id);
+  revalidatePath("/dashboard/availability");
 }
 
 export async function removeUnavailability(id: string): Promise<void> {
