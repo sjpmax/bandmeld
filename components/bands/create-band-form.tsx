@@ -3,18 +3,10 @@
 import { useActionState, useEffect, useState } from "react";
 import { toast } from "sonner";
 import { createBand } from "@/app/dashboard/bands/actions";
+import { slugify } from "@/lib/slug";
 import type { ActionResult } from "@/types";
 
 const initial: ActionResult<string> = { ok: true };
-
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
-}
 
 export function CreateBandForm({ siteOrigin }: { siteOrigin: string }) {
   const [state, formAction, pending] = useActionState(createBand, initial);

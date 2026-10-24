@@ -14,6 +14,24 @@ const KIND_MIME: Record<Kind, string> = {
   epk: "application/pdf",
 };
 
+/** Allowlisted extensions, keyed by MIME. Anything else falls back to "bin". */
+const EXT_BY_MIME: Record<string, string> = {
+  "image/png": "png",
+  "image/jpeg": "jpg",
+  "image/webp": "webp",
+  "image/svg+xml": "svg",
+  "application/pdf": "pdf",
+};
+
+const ALLOWED_EXTS = new Set(Object.values(EXT_BY_MIME));
+
+function safeExtFor(file: File): string {
+  const parts = file.name.split(".");
+  const rawExt = parts.length > 1 ? parts.pop()!.toLowerCase().replace(/[^a-z0-9]/g, "") : "";
+  if (rawExt && ALLOWED_EXTS.has(rawExt)) return rawExt;
+  return EXT_BY_MIME[file.type] ?? "bin";
+}
+
 const MAX_BYTES = 20 * 1024 * 1024; // matches bucket limit
 
 export function AssetUploader({
@@ -45,8 +63,10 @@ export function AssetUploader({
 
     setPending(true);
     const supabase = createClient();
-    const ext = (file.name.split(".").pop() ?? "bin").toLowerCase().replace(/[^a-z0-9]/g, "");
-    const path = `${bandId}/${kind}/f-${Date.now()}.${ext}`;
+    const ext = safeExtFor(file);
+    // crypto.randomUUID avoids ms-collision when uploads happen rapidly or
+    // concurrently; Date.now() alone would occasionally hit upsert:false.
+    const path = `${bandId}/${kind}/${crypto.randomUUID()}.${ext}`;
 
     const { error: upErr } = await supabase.storage
       .from("band-assets")

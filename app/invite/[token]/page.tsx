@@ -98,14 +98,11 @@ export default async function AcceptInvitePage({
                 </button>
               </form>
             ) : (
-              <div className="flex flex-col gap-3">
-                <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
-                  You&apos;re signed in as {signedInEmail ?? "someone else"}, but this invite is for{" "}
-                  <strong>{preview.email}</strong>. Sign out and sign in with the right email to
-                  accept.
-                </p>
-                <form action="/auth/signout" method="post" className="hidden" />
-              </div>
+              <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+                You&apos;re signed in as {signedInEmail ?? "someone else"}, but this invite is for{" "}
+                <strong>{preview.email}</strong>. Sign out from the dashboard header and sign in
+                with the right email to accept.
+              </p>
             )
           ) : (
             <div className="flex flex-col gap-3">

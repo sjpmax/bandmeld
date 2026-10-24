@@ -3,17 +3,17 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
+import { SLUG_RE, slugify } from "@/lib/slug";
 import type { ActionResult } from "@/types";
 
-const SLUG_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+const BAND_ASSETS_BUCKET = "band-assets";
 
-function slugify(name: string): string {
-  return name
-    .toLowerCase()
-    .trim()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "")
-    .slice(0, 60);
+/** Extract the in-bucket path from a public URL we previously stored. */
+function assetPathFromPublicUrl(url: string | null): string | null {
+  if (!url) return null;
+  const marker = `/${BAND_ASSETS_BUCKET}/`;
+  const idx = url.indexOf(marker);
+  return idx === -1 ? null : url.slice(idx + marker.length);
 }
 
 // -----------------------------------------------------------------------------
@@ -49,7 +49,7 @@ export async function createBand(
     p_slug: slug,
     p_home_city: homeCity,
     p_genres: genres,
-    p_bio: bio ?? undefined,
+    p_bio: bio ?? "",
   });
 
   if (error) {
@@ -118,6 +118,12 @@ export async function updateBand(
 // Kind maps to the column: logo / press / rider / epk.
 // -----------------------------------------------------------------------------
 type AssetKind = "logo" | "press" | "rider" | "epk";
+const COLUMN_FOR: Record<AssetKind, "logo_url" | "press_photo_url" | "tech_rider_url" | "epk_pdf_url"> = {
+  logo: "logo_url",
+  press: "press_photo_url",
+  rider: "tech_rider_url",
+  epk: "epk_pdf_url",
+};
 
 export async function setBandAssetUrl(
   bandId: string,
@@ -125,6 +131,19 @@ export async function setBandAssetUrl(
   publicUrl: string | null,
 ): Promise<ActionResult> {
   const supabase = await createClient();
+  const column = COLUMN_FOR[kind];
+
+  // Fetch the previously-stored URL for this column so we can delete the
+  // underlying storage object after the DB update succeeds — otherwise
+  // "removed" assets stay publicly fetchable forever.
+  const { data: current } = await supabase
+    .from("bands")
+    .select("logo_url, press_photo_url, tech_rider_url, epk_pdf_url")
+    .eq("id", bandId)
+    .maybeSingle();
+  const prevPath = assetPathFromPublicUrl(current ? current[column] : null);
+  const nextPath = assetPathFromPublicUrl(publicUrl);
+
   // Explicit shape per column so Supabase's generated types stay happy.
   const patch =
     kind === "logo"
@@ -137,6 +156,12 @@ export async function setBandAssetUrl(
 
   const { error } = await supabase.from("bands").update(patch).eq("id", bandId);
   if (error) return { ok: false, error: error.message };
+
+  // Best-effort cleanup. Don't fail the action if storage delete errors —
+  // the row is already updated.
+  if (prevPath && prevPath !== nextPath) {
+    await supabase.storage.from(BAND_ASSETS_BUCKET).remove([prevPath]);
+  }
 
   revalidatePath(`/dashboard/bands/${bandId}`);
   return { ok: true, message: publicUrl ? "Uploaded." : "Removed." };

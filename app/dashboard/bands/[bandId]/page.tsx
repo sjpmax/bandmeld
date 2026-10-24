@@ -19,25 +19,29 @@ export default async function BandSettingsPage({
   const userId = await requireUserId(`/dashboard/bands/${bandId}`);
   const supabase = await createClient();
 
-  const [{ data: band, error: bandErr }, { data: members, error: membersErr }, { data: invites }] =
-    await Promise.all([
-      supabase.from("bands").select("*").eq("id", bandId).maybeSingle(),
-      supabase
-        .from("band_members")
-        .select("id, profile_id, role_in_band, is_admin, joined_at")
-        .eq("band_id", bandId)
-        .order("joined_at", { ascending: true }),
-      supabase
-        .from("band_invites")
-        .select("id, email, role_in_band, created_at, expires_at")
-        .eq("band_id", bandId)
-        .is("accepted_at", null)
-        .order("created_at", { ascending: false }),
-    ]);
+  const [
+    { data: band, error: bandErr },
+    { data: members, error: membersErr },
+    { data: invites, error: invitesErr },
+  ] = await Promise.all([
+    supabase.from("bands").select("*").eq("id", bandId).maybeSingle(),
+    supabase
+      .from("band_members")
+      .select("id, profile_id, role_in_band, is_admin, joined_at")
+      .eq("band_id", bandId)
+      .order("joined_at", { ascending: true }),
+    supabase
+      .from("band_invites")
+      .select("id, email, role_in_band, created_at, expires_at")
+      .eq("band_id", bandId)
+      .is("accepted_at", null)
+      .order("created_at", { ascending: false }),
+  ]);
 
   if (bandErr) throw bandErr;
   if (!band) notFound();
   if (membersErr) throw membersErr;
+  if (invitesErr) throw invitesErr;
 
   // Fetch profile names for the member list (bandmates-only RLS allows this).
   const profileIds = members?.map((m) => m.profile_id) ?? [];
