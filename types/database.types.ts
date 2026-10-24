@@ -64,6 +64,8 @@ export type Database = {
           youtube_url: string | null;
           apple_music_url: string | null;
           epk_pdf_url: string | null;
+          instagram_url: string | null;
+          linktree_url: string | null;
           avg_local_draw: number | null;
           created_at: string | null;
           updated_at: string | null;
@@ -82,6 +84,8 @@ export type Database = {
           youtube_url?: string | null;
           apple_music_url?: string | null;
           epk_pdf_url?: string | null;
+          instagram_url?: string | null;
+          linktree_url?: string | null;
           avg_local_draw?: number | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -100,6 +104,8 @@ export type Database = {
           youtube_url?: string | null;
           apple_music_url?: string | null;
           epk_pdf_url?: string | null;
+          instagram_url?: string | null;
+          linktree_url?: string | null;
           avg_local_draw?: number | null;
           created_at?: string | null;
           updated_at?: string | null;

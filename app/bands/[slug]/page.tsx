@@ -74,6 +74,65 @@ export default async function BandEpkPage({ params }: Props) {
         )}
       </section>
 
+      {(band.spotify_url ||
+        band.apple_music_url ||
+        band.youtube_url ||
+        band.instagram_url ||
+        band.linktree_url) && (
+        <section className="flex flex-wrap gap-2">
+          {band.spotify_url && (
+            <a
+              href={band.spotify_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              Spotify ↗
+            </a>
+          )}
+          {band.apple_music_url && (
+            <a
+              href={band.apple_music_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              Apple Music ↗
+            </a>
+          )}
+          {band.youtube_url && (
+            <a
+              href={band.youtube_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              YouTube ↗
+            </a>
+          )}
+          {band.instagram_url && (
+            <a
+              href={band.instagram_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              Instagram ↗
+            </a>
+          )}
+          {band.linktree_url && (
+            <a
+              href={band.linktree_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              All links ↗
+            </a>
+          )}
+        </section>
+      )}
+
       {(band.press_photo_url || band.tech_rider_url || band.epk_pdf_url) && (
         <section className="flex flex-wrap gap-3">
           {band.press_photo_url && (

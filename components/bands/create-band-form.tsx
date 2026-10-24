@@ -8,11 +8,18 @@ import type { ActionResult } from "@/types";
 
 const initial: ActionResult<string> = { ok: true };
 
-export function CreateBandForm({ siteOrigin }: { siteOrigin: string }) {
+export function CreateBandForm() {
   const [state, formAction, pending] = useActionState(createBand, initial);
   const [name, setName] = useState("");
   const [slug, setSlug] = useState("");
   const [slugEdited, setSlugEdited] = useState(false);
+  // Preview the real browser origin — don't trust NEXT_PUBLIC_SITE_URL,
+  // which can be misconfigured in Vercel and show "localhost" in prod.
+  const [origin, setOrigin] = useState("");
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   useEffect(() => {
     if (!state.ok) toast.error(state.error);
@@ -40,7 +47,7 @@ export function CreateBandForm({ siteOrigin }: { siteOrigin: string }) {
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Public URL
         <div className="flex items-center gap-2">
-          <span className="text-sm opacity-60">{siteOrigin}/bands/</span>
+          <span className="text-sm opacity-60">{origin || "…"}/bands/</span>
           <input
             name="slug"
             placeholder={slugify(name) || "your-band"}

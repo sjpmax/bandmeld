@@ -57,41 +57,73 @@ export function BandSettingsForm({ band }: { band: Band }) {
         />
       </label>
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Spotify URL
-          <input
-            name="spotify_url"
-            type="url"
-            maxLength={300}
-            defaultValue={band.spotify_url ?? ""}
-            placeholder="https://open.spotify.com/artist/…"
-            className={input}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          Apple Music URL
-          <input
-            name="apple_music_url"
-            type="url"
-            maxLength={300}
-            defaultValue={band.apple_music_url ?? ""}
-            placeholder="https://music.apple.com/…"
-            className={input}
-          />
-        </label>
-        <label className="flex flex-col gap-1.5 text-sm font-medium">
-          YouTube URL
-          <input
-            name="youtube_url"
-            type="url"
-            maxLength={300}
-            defaultValue={band.youtube_url ?? ""}
-            placeholder="https://youtube.com/…"
-            className={input}
-          />
-        </label>
-      </div>
+      <fieldset className="flex flex-col gap-3">
+        <legend className="text-sm font-medium">Streaming</legend>
+        <div className="grid gap-4 sm:grid-cols-3">
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Spotify
+            <input
+              name="spotify_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.spotify_url ?? ""}
+              placeholder="https://open.spotify.com/artist/…"
+              className={input}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Apple Music
+            <input
+              name="apple_music_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.apple_music_url ?? ""}
+              placeholder="https://music.apple.com/…"
+              className={input}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            YouTube
+            <input
+              name="youtube_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.youtube_url ?? ""}
+              placeholder="Video or channel URL"
+              className={input}
+            />
+            <span className="text-xs opacity-60">Video URL embeds; channel URL just links.</span>
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset className="flex flex-col gap-3">
+        <legend className="text-sm font-medium">Social</legend>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Instagram
+            <input
+              name="instagram_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.instagram_url ?? ""}
+              placeholder="https://instagram.com/yourband"
+              className={input}
+            />
+          </label>
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Linktree (or similar)
+            <input
+              name="linktree_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.linktree_url ?? ""}
+              placeholder="https://linktr.ee/yourband"
+              className={input}
+            />
+          </label>
+        </div>
+      </fieldset>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium sm:max-w-xs">
         Average local draw

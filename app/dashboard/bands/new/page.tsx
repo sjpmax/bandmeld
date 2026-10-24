@@ -5,8 +5,6 @@ import { CreateBandForm } from "@/components/bands/create-band-form";
 export const metadata: Metadata = { title: "New band" };
 
 export default function NewBandPage() {
-  const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://bandsnap.vercel.app";
-
   return (
     <div className="mx-auto flex max-w-xl flex-col gap-6">
       <header>
@@ -16,7 +14,7 @@ export default function NewBandPage() {
           on.
         </p>
       </header>
-      <CreateBandForm siteOrigin={siteOrigin} />
+      <CreateBandForm />
       <p className="text-sm opacity-70">
         <Link href="/dashboard" className="underline">
           ← Back to dashboard
