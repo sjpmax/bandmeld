@@ -57,7 +57,17 @@ export async function disconnectGoogleCalendar(): Promise<void> {
   const { data: claims } = await supabase.auth.getClaims();
   const profileId = claims?.claims?.sub;
   if (!profileId) return;
+
+  // Delete our stored provider tokens.
   await supabase.from("google_calendar_connections").delete().eq("profile_id", profileId);
+
+  // Also unlink the Google identity itself — otherwise a future Connect
+  // click fails with `identity_already_exists` (auth remembers the link
+  // even after we drop the token row).
+  const { data: idents } = await supabase.auth.getUserIdentities();
+  const google = idents?.identities?.find((i) => i.provider === "google");
+  if (google) await supabase.auth.unlinkIdentity(google);
+
   revalidatePath("/dashboard/availability");
 }
 

@@ -11,6 +11,21 @@ export function GoogleConnectButton({ label }: { label: string }) {
   async function connect() {
     setPending(true);
     const supabase = createClient();
+
+    // If a prior incomplete disconnect left the Google identity linked at the
+    // auth level, linkIdentity below would fail with `identity_already_exists`.
+    // Clear it first.
+    const { data: idents } = await supabase.auth.getUserIdentities();
+    const stale = idents?.identities?.find((i) => i.provider === "google");
+    if (stale) {
+      const { error: unlinkErr } = await supabase.auth.unlinkIdentity(stale);
+      if (unlinkErr) {
+        toast.error(`Couldn't reset existing Google link: ${unlinkErr.message}`);
+        setPending(false);
+        return;
+      }
+    }
+
     const { data, error } = await supabase.auth.linkIdentity({
       provider: "google",
       options: {
