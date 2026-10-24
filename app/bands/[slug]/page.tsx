@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicEpk } from "@/lib/epk";
-import { toSpotifyEmbed, toYouTubeEmbed } from "@/lib/embeds";
+import { toAppleMusicEmbed, toSpotifyEmbed, toYouTubeEmbed } from "@/lib/embeds";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -23,6 +23,7 @@ export default async function BandEpkPage({ params }: Props) {
   if (!band) notFound();
 
   const spotify = toSpotifyEmbed(band.spotify_url);
+  const appleMusic = toAppleMusicEmbed(band.apple_music_url);
   const youtube = toYouTubeEmbed(band.youtube_url);
   const dateFmt = new Intl.DateTimeFormat("en-US", {
     weekday: "short", month: "short", day: "numeric", timeZone: "UTC",
@@ -40,11 +41,15 @@ export default async function BandEpkPage({ params }: Props) {
 
       {band.bio && <p className="whitespace-pre-line text-lg leading-relaxed">{band.bio}</p>}
 
-      {(spotify || youtube) && (
+      {(spotify || appleMusic || youtube) && (
         <section className="flex flex-col gap-4">
           {spotify && (
             <iframe src={spotify} title={`${band.name} on Spotify`} loading="lazy" height={352}
               allow="encrypted-media" className="w-full rounded-xl border-0" />
+          )}
+          {appleMusic && (
+            <iframe src={appleMusic} title={`${band.name} on Apple Music`} loading="lazy" height={450}
+              allow="autoplay *; encrypted-media *;" className="w-full rounded-xl border-0" />
           )}
           {youtube && (
             <iframe src={youtube} title={`${band.name} on YouTube`} loading="lazy" allowFullScreen
@@ -69,11 +74,16 @@ export default async function BandEpkPage({ params }: Props) {
         )}
       </section>
 
-      {(band.press_photo_url || band.tech_rider_url) && (
+      {(band.press_photo_url || band.tech_rider_url || band.epk_pdf_url) && (
         <section className="flex flex-wrap gap-3">
           {band.press_photo_url && (
             <a href={band.press_photo_url} download className="rounded-full bg-accent px-4 py-2 text-sm font-medium text-white">
               Download press photo
+            </a>
+          )}
+          {band.epk_pdf_url && (
+            <a href={band.epk_pdf_url} target="_blank" rel="noopener" className="rounded-full border border-current px-4 py-2 text-sm font-medium">
+              EPK (PDF)
             </a>
           )}
           {band.tech_rider_url && (

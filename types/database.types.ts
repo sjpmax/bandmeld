@@ -62,6 +62,8 @@ export type Database = {
           tech_rider_url: string | null;
           spotify_url: string | null;
           youtube_url: string | null;
+          apple_music_url: string | null;
+          epk_pdf_url: string | null;
           avg_local_draw: number | null;
           created_at: string | null;
           updated_at: string | null;
@@ -78,6 +80,8 @@ export type Database = {
           tech_rider_url?: string | null;
           spotify_url?: string | null;
           youtube_url?: string | null;
+          apple_music_url?: string | null;
+          epk_pdf_url?: string | null;
           avg_local_draw?: number | null;
           created_at?: string | null;
           updated_at?: string | null;
@@ -94,11 +98,60 @@ export type Database = {
           tech_rider_url?: string | null;
           spotify_url?: string | null;
           youtube_url?: string | null;
+          apple_music_url?: string | null;
+          epk_pdf_url?: string | null;
           avg_local_draw?: number | null;
           created_at?: string | null;
           updated_at?: string | null;
         };
         Relationships: [];
+      };
+      band_invites: {
+        Row: {
+          id: string;
+          band_id: string;
+          email: string;
+          token: string;
+          role_in_band: string;
+          invited_by: string | null;
+          created_at: string;
+          expires_at: string;
+          accepted_at: string | null;
+          accepted_by: string | null;
+        };
+        Insert: {
+          id?: string;
+          band_id: string;
+          email: string;
+          token: string;
+          role_in_band?: string;
+          invited_by?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+        };
+        Update: {
+          id?: string;
+          band_id?: string;
+          email?: string;
+          token?: string;
+          role_in_band?: string;
+          invited_by?: string | null;
+          created_at?: string;
+          expires_at?: string;
+          accepted_at?: string | null;
+          accepted_by?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "band_invites_band_id_fkey";
+            columns: ["band_id"];
+            isOneToOne: false;
+            referencedRelation: "bands";
+            referencedColumns: ["id"];
+          },
+        ];
       };
       band_members: {
         Row: {
@@ -290,6 +343,31 @@ export type Database = {
       is_band_member: {
         Args: { p_band_id: string };
         Returns: boolean;
+      };
+      // ---- Added in 0005_bands_and_invites.sql ----
+      create_band_invite: {
+        Args: { p_band_id: string; p_email: string; p_role_in_band?: string };
+        Returns: string; // token
+      };
+      preview_band_invite: {
+        Args: { p_token: string };
+        Returns: {
+          band_id: string | null;
+          band_name: string | null;
+          band_slug: string | null;
+          email: string | null;
+          role_in_band: string | null;
+          is_valid: boolean;
+          reason: string | null;
+        }[];
+      };
+      accept_band_invite: {
+        Args: { p_token: string };
+        Returns: string; // band id joined
+      };
+      revoke_band_invite: {
+        Args: { p_invite_id: string };
+        Returns: undefined;
       };
     };
     Enums: {

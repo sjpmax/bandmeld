@@ -19,6 +19,18 @@ export function toSpotifyEmbed(url: string | null | undefined): string | null {
   }
 }
 
+export function toAppleMusicEmbed(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    if (u.hostname !== "music.apple.com") return null;
+    // Apple's embed is served from embed.music.apple.com with the same path.
+    return `https://embed.music.apple.com${u.pathname}${u.search}`;
+  } catch {
+    return null;
+  }
+}
+
 export function toYouTubeEmbed(url: string | null | undefined): string | null {
   if (!url) return null;
   try {

@@ -11,6 +11,7 @@ export type { Database, Json } from "./database.types";
 export type Profile = Tables<"profiles">;
 export type Band = Tables<"bands">;
 export type BandMember = Tables<"band_members">;
+export type BandInvite = Tables<"band_invites">;
 export type MemberUnavailability = Tables<"member_unavailabilities">;
 export type BandOpenDate = Tables<"band_open_dates">;
 
