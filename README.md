@@ -1,6 +1,41 @@
-# BandSnap — Phase 1 scaffold
+# BandSnap
 
-Next.js 16 (App Router) · React 19 · Tailwind 4 · Supabase (`@supabase/ssr`) · TypeScript (strict)
+Multi-sided marketplace for the DIY / local live music scene. Bands sync calendars, assemble 3–4 act bills on mutually open dates, pitch turnkey packages to venues, and hold each other accountable via a double-blind 3-way rating system.
+
+Full product spec: [band snap PRD.md](./band%20snap%20PRD.md).
+
+**Stack:** Next.js 16 (App Router) · React 19 · Tailwind 4 · Supabase (`@supabase/ssr`) · TypeScript (strict).
+
+## Phase roadmap (from the PRD)
+
+| Phase | Scope | Status |
+| :---- | :---- | :---- |
+| **1 — Trojan Horse** | Member calendar sync · Band EPK · Shareable public band page | In progress (this repo) |
+| **2 — Network** | Band-to-band Bill Builder · Local photographer directory · 3-way ratings | Not started |
+| **3 — Venue marketplace** | Shareable pitch pages · Inbound open-slot board · Verified draw stats | Not started |
+| **4 — Mobile + monetization** | React Native app · Escrow / door splits | Not started |
+
+### Phase 1 progress
+
+Scaffolded:
+- Auth (signup, login, email confirm, sign out) — [app/(auth)/](app/(auth)/), [app/auth/confirm/route.ts](app/auth/confirm/route.ts)
+- Supabase schema + RLS + RPCs — [supabase/migrations/](supabase/migrations/)
+- `create_band` RPC (makes creator admin, enforces unique slug)
+- `sync_band_open_dates` RPC (next 366 days, member unavailability → `actively_seeking`)
+- `band-assets` storage bucket (logo / press / rider), admin-write / public-read
+- Dashboard shell listing user's bands — [app/dashboard/page.tsx](app/dashboard/page.tsx)
+- Public EPK skeleton with Spotify / YouTube embeds + open dates — [app/bands/[slug]/page.tsx](app/bands/[slug]/page.tsx)
+- My-availability picker (add / remove unavailability blocks) — [app/dashboard/availability/page.tsx](app/dashboard/availability/page.tsx)
+- Google Calendar import (OAuth, review-then-apply) — [app/dashboard/availability/import/page.tsx](app/dashboard/availability/import/page.tsx), [lib/google-calendar.ts](lib/google-calendar.ts)
+
+Still stubs:
+- [ ] Create-band form → `create_band` RPC — [app/dashboard/bands/new/page.tsx](app/dashboard/bands/new/page.tsx)
+- [ ] Band settings (bio, links, genres) + uploads + roster/invites — [app/dashboard/bands/[bandId]/page.tsx](app/dashboard/bands/[bandId]/page.tsx)
+- [ ] Band calendar + `sync_band_open_dates` + flip to `penciled_in` / `booked` — [app/dashboard/bands/[bandId]/availability/page.tsx](app/dashboard/bands/[bandId]/availability/page.tsx)
+- [ ] EPK visual design pass
+- [ ] `band_invites` table + accept flow for non-user bandmates
+- [ ] Apple Calendar ICS fallback (no OAuth equivalent exists)
+- [ ] Encrypt stored Google tokens with pgsodium / Supabase Vault
 
 ## Setup
 
@@ -20,9 +55,32 @@ npm run dev
 No CLI? Paste the two files in `supabase/migrations/` into the SQL Editor, in order.
 
 **Auth settings (Supabase dashboard):**
-- Auth → URL Configuration: Site URL `http://localhost:3000` (add your Vercel URL later), and add `http://localhost:3000/auth/confirm` to Redirect URLs.
+- Auth → URL Configuration: Site URL `http://localhost:3001` (add your Vercel URL later), and add `http://localhost:3001/auth/confirm` and `http://localhost:3001/auth/google/callback` to Redirect URLs.
 - Optional: Auth → Email Templates → Confirm signup link →
   `{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=email&next=/dashboard`
+
+### Google Calendar import (OAuth)
+
+Users can click **Connect Google Calendar** on `/dashboard/availability` to link their Google account and pull busy events into `member_unavailabilities`. Setup is a one-time dance:
+
+1. **Google Cloud Console**
+   - Create a project. Enable the **Google Calendar API**.
+   - OAuth consent screen → *External*, Testing mode (add yourself as a test user; publishing + Google's app verification is required to onboard non-test users for the sensitive `calendar.events` scope).
+   - OAuth consent screen → **Scopes** → *Add or Remove Scopes* → check `.../auth/calendar.events` (covers both reading the user's events for import AND writing confirmed show dates back to their calendar). Save.
+   - Credentials → Create *OAuth client ID* → *Web application*.
+     - Authorized redirect URI: `https://<your-ref>.supabase.co/auth/v1/callback` (yes, Supabase's, not ours — Supabase proxies the flow).
+
+2. **Supabase dashboard**
+   - Auth → Providers → Google → paste the Client ID + Client Secret, **enable**.
+   - Auth → URL Configuration → Redirect URLs → add `http://localhost:3001/auth/google/callback` (and the prod equivalent later).
+
+3. **This app's `.env.local`** — same values as step 2, needed server-side to refresh access tokens:
+   ```
+   GOOGLE_CLIENT_ID=...
+   GOOGLE_CLIENT_SECRET=...
+   ```
+
+The flow: user clicks the button → `supabase.auth.linkIdentity('google', …)` (not `signInWithOAuth`, so we don't create a second account) → Google consent → `/auth/google/callback` captures `provider_token` + `provider_refresh_token` into `public.google_calendar_connections` → redirects to `/dashboard/availability/import` for review. Preselect rules (one-offs + 2+ day blocks on, recurring series off) match [band snap PRD.md](./band%20snap%20PRD.md) §3.1.
 
 ## Structure
 
@@ -46,8 +104,11 @@ app/
   dashboard/                    Auth-guarded: band list, new band, band settings, availability
   bands/[slug]/                 Public EPK (+ not-found)
 supabase/migrations/
-  20261022000000_initial_schema.sql   Your original schema, unchanged
+  20261022000000_initial_schema.sql   Original schema
   20261022000100_rls_and_rpc.sql      RLS fixes, create_band, availability engine, storage
+  20261024000000_google_calendar.sql  google_calendar_connections (OAuth tokens, owner-only RLS)
+lib/google-calendar.ts            Google Calendar v3 client: token refresh, event list, classify
+app/auth/google/callback/         OAuth landing: exchanges code → stores provider tokens
 ```
 
 ## Data-access conventions
@@ -59,6 +120,16 @@ supabase/migrations/
 - **Profiles** are readable only by the user and their bandmates (protects phone numbers). Don't query `profiles` from public pages.
 - **Uploads:** bucket `band-assets`, path `{band_id}/{logo|press|rider}/{file}`. Only that band's admins can write; files are publicly readable.
 - **Auth checks on the server:** `getClaims()` (verifies JWT), never `getSession()`.
+
+## Auto-migrating on push
+
+[.github/workflows/db-migrate.yml](.github/workflows/db-migrate.yml) runs `supabase db push` on every push to `master` that touches `supabase/migrations/**`. Set these repo secrets (GitHub → Settings → Secrets and variables → Actions):
+
+- `SUPABASE_ACCESS_TOKEN` — personal access token from https://supabase.com/dashboard/account/tokens
+- `SUPABASE_PROJECT_REF` — the 20-char slug from the Supabase dashboard URL
+- `SUPABASE_DB_PASSWORD` — database password (Supabase → Settings → Database)
+
+Already-applied migrations are no-ops, so the workflow is safe to re-run (or trigger via *Actions → Supabase migrations → Run workflow*).
 
 ## Known follow-ups
 

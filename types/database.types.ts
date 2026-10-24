@@ -177,6 +177,50 @@ export type Database = {
           },
         ];
       };
+      google_calendar_connections: {
+        Row: {
+          profile_id: string;
+          google_sub: string;
+          access_token: string;
+          refresh_token: string | null;
+          expires_at: string;
+          scope: string;
+          last_synced_at: string | null;
+          created_at: string | null;
+          updated_at: string | null;
+        };
+        Insert: {
+          profile_id: string;
+          google_sub: string;
+          access_token: string;
+          refresh_token?: string | null;
+          expires_at: string;
+          scope: string;
+          last_synced_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Update: {
+          profile_id?: string;
+          google_sub?: string;
+          access_token?: string;
+          refresh_token?: string | null;
+          expires_at?: string;
+          scope?: string;
+          last_synced_at?: string | null;
+          created_at?: string | null;
+          updated_at?: string | null;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "google_calendar_connections_profile_id_fkey";
+            columns: ["profile_id"];
+            isOneToOne: true;
+            referencedRelation: "profiles";
+            referencedColumns: ["id"];
+          },
+        ];
+      };
       band_open_dates: {
         Row: {
           id: string;

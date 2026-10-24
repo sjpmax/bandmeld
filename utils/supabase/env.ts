@@ -18,3 +18,21 @@ export function getSupabaseEnv() {
 
   return { url, key };
 }
+
+/**
+ * Google OAuth client credentials, used server-side to refresh an expired
+ * provider_token against Google's token endpoint. Same values pasted into
+ * Supabase dashboard → Auth → Providers → Google.
+ */
+export function getGoogleOAuthEnv() {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+  if (!clientId || !clientSecret) {
+    throw new Error(
+      "Missing Google OAuth env vars. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.local.",
+    );
+  }
+
+  return { clientId, clientSecret };
+}
