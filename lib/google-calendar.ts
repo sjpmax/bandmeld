@@ -205,6 +205,18 @@ function eventToRange(ev: GoogleEvent): { startDate: string; endDate: string; is
  * - Preselect rules (from user): one-off events ON; multi-day events ON;
  *   recurring instances OFF (user opts in by toggling the series).
  */
+/**
+ * Words/phrases that signal "I'm actually unavailable" even when Google says
+ * the event is `transparent` (free). Airline bookings and hotel reservations
+ * are usually synced in as free, which is wrong for our purposes.
+ */
+const TRAVEL_RE =
+  /\b(flight|flying|airline|train|driving to|drive to|stay at|staying at|hotel|airbnb|lodging|vacation|holiday|trip|traveling|travelling|away|out of office|ooo|pto|offsite|off-site)\b/i;
+
+function looksLikeTravel(summary: string): boolean {
+  return TRAVEL_RE.test(summary);
+}
+
 export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
   let skippedCount = 0;
   const oneOffs: ReviewableEvent[] = [];
@@ -222,11 +234,34 @@ export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
     const seriesId = ev.recurringEventId ?? null;
     const isRecurring = seriesId !== null;
     const isMultiDay = spanDays >= 2;
-    const preselect = !isRecurring || isMultiDay;
+    const summary = ev.summary?.trim() || "(Untitled event)";
+    const isTransparent = ev.transparency === "transparent";
+    const isTravel = looksLikeTravel(summary);
 
+    // Transparent events usually mean "I'm free during this" — but travel
+    // bookings and multi-day stays sync in as transparent while being
+    // obvious unavailability. Rescue those into the main list.
+    const transparentButObviousBlock = isTransparent && (isMultiDay || isTravel);
+    if (isTransparent && !transparentButObviousBlock) {
+      missed.push({
+        id: ev.id,
+        summary,
+        startDate: range.startDate,
+        endDate: range.endDate,
+        isAllDay: range.isAllDay,
+        spanDays,
+        seriesId,
+        preselect: false,
+      });
+      continue;
+    }
+
+    // Preselect: one-off ON, multi-day ON, recurring OFF (user opts in
+    // per series).
+    const preselect = !isRecurring || isMultiDay;
     const review: ReviewableEvent = {
       id: ev.id,
-      summary: ev.summary?.trim() || "(Untitled event)",
+      summary,
       startDate: range.startDate,
       endDate: range.endDate,
       isAllDay: range.isAllDay,
@@ -234,13 +269,6 @@ export function classifyEvents(events: GoogleEvent[]): ReviewPayload {
       seriesId,
       preselect,
     };
-
-    // "transparent" = user marked themselves available anyway. Surface
-    // these in the "did I miss one?" bucket, off by default.
-    if (ev.transparency === "transparent") {
-      missed.push({ ...review, preselect: false });
-      continue;
-    }
 
     if (seriesId) {
       const existing = seriesMap.get(seriesId);
