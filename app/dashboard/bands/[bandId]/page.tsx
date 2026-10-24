@@ -127,26 +127,6 @@ export default async function BandSettingsPage({
             />
           </div>
 
-          <div className="rounded-xl border border-dashed border-black/20 bg-black/[0.02] p-4 dark:border-white/20 dark:bg-white/[0.02]">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="font-semibold">EPK Builder</h3>
-                <p className="text-sm opacity-70">
-                  Coming soon — Premium. We&apos;ll compose your bio, press photo, music embeds, draw
-                  stats and tech rider into a one-link EPK you can email to venues.
-                </p>
-              </div>
-              <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold text-amber-800 dark:text-amber-200">
-                Coming soon
-              </span>
-            </div>
-            <ul className="mt-3 flex list-disc flex-col gap-1 pl-5 text-sm opacity-80">
-              <li>Press photo at the top, clean name + genre + home city.</li>
-              <li>Two or three short paragraphs — what you sound like, who you&apos;ve shared a bill with.</li>
-              <li>Embedded Spotify + YouTube so bookers can hear you without leaving the page.</li>
-              <li>Tech rider link, contact email, honest draw estimate.</li>
-            </ul>
-          </div>
         </section>
       )}
 

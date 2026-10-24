@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { Logo } from "@/components/logo";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { requireUserId } from "@/utils/supabase/server";
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -18,6 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
           <div className="flex items-center gap-4 text-sm">
             <Link href="/dashboard/availability">My availability</Link>
+            <ThemeToggle />
             <form action={signOut}>
               <button type="submit" className="opacity-70 hover:opacity-100">Sign out</button>
             </form>

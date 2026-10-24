@@ -69,6 +69,7 @@ export type Database = {
           home_city_lat: number | null;
           home_city_lng: number | null;
           avg_local_draw: number | null;
+          is_fake: boolean;
           created_at: string | null;
           updated_at: string | null;
         };
@@ -91,6 +92,7 @@ export type Database = {
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
+          is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
         };
@@ -113,6 +115,7 @@ export type Database = {
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
+          is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
         };

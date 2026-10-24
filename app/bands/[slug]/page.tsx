@@ -31,6 +31,12 @@ export default async function BandEpkPage({ params }: Props) {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10">
+      {band.is_fake && (
+        <aside className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
+          <strong>DEMO band</strong> — seeded data for testing BandSnap. Not a real act.
+        </aside>
+      )}
+
       <header className="flex flex-col items-start gap-4">
         {band.logo_url && (
           <img
@@ -40,7 +46,14 @@ export default async function BandEpkPage({ params }: Props) {
           />
         )}
         <div className="flex flex-col gap-2">
-          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{band.name}</h1>
+          <h1 className="flex flex-wrap items-center gap-3 text-4xl font-bold tracking-tight sm:text-5xl">
+            {band.name}
+            {band.is_fake && (
+              <span className="rounded-full bg-amber-500/20 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-300">
+                Demo
+              </span>
+            )}
+          </h1>
           <p className="opacity-70">
             {band.home_city}
             {band.genres.length > 0 && ` · ${band.genres.join(", ")}`}

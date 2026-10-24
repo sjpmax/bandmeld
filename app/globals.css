@@ -1,6 +1,12 @@
 @import "tailwindcss";
 @source not "../.vs";
 
+/* Tailwind 4: switch the `dark:` variant to respond to a `.dark` class
+   on <html>, instead of the OS prefers-color-scheme default. A tiny
+   inline script in the root layout sets the class pre-render based on
+   localStorage + OS so there's no theme flash on first paint. */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-ink: #141414;
   --color-paper: #faf8f4;
@@ -9,7 +15,11 @@
 }
 
 html {
-  color-scheme: light dark;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
@@ -17,9 +27,7 @@ body {
   color: var(--color-ink);
 }
 
-@media (prefers-color-scheme: dark) {
-  body {
-    background: #0f0f0f;
-    color: #f2efe9;
-  }
+html.dark body {
+  background: #0f0f0f;
+  color: #f2efe9;
 }
