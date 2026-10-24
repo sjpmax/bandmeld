@@ -109,7 +109,7 @@ export default async function MyAvailabilityPage({
                 <form action={disconnectGoogleCalendar}>
                   <button
                     type="submit"
-                    className="rounded-full border border-black/15 px-4 py-2 text-sm opacity-70 hover:opacity-100 dark:border-white/20"
+                    className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-black/5 dark:border-white/20 dark:bg-white/5 dark:text-inherit dark:hover:bg-white/10"
                   >
                     Disconnect
                   </button>

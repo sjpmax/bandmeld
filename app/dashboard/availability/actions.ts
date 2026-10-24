@@ -54,8 +54,10 @@ export async function removeUnavailability(id: string): Promise<void> {
 
 export async function disconnectGoogleCalendar(): Promise<void> {
   const supabase = await createClient();
-  // RLS owns the auth check — no-op for other users.
-  await supabase.from("google_calendar_connections").delete().neq("profile_id", "");
+  const { data: claims } = await supabase.auth.getClaims();
+  const profileId = claims?.claims?.sub;
+  if (!profileId) return;
+  await supabase.from("google_calendar_connections").delete().eq("profile_id", profileId);
   revalidatePath("/dashboard/availability");
 }
 
