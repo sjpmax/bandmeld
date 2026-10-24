@@ -337,6 +337,7 @@ export type Database = {
           p_home_city: string;
           p_genres?: string[];
           p_bio?: string;
+          p_founder_role?: string;
         };
         Returns: string; // new band id
       };

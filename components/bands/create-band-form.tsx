@@ -76,6 +76,33 @@ export function CreateBandForm() {
       </label>
 
       <label className="flex flex-col gap-1.5 text-sm font-medium">
+        Your role in the band
+        <input
+          name="founder_role"
+          maxLength={60}
+          list="founder-role-suggestions"
+          className={input}
+          placeholder="Lead vocals, Guitar, Bass, Drums…"
+        />
+        <datalist id="founder-role-suggestions">
+          <option value="Lead vocals" />
+          <option value="Backing vocals" />
+          <option value="Guitar" />
+          <option value="Lead guitar" />
+          <option value="Rhythm guitar" />
+          <option value="Bass" />
+          <option value="Drums" />
+          <option value="Keys" />
+          <option value="Synth" />
+          <option value="Band leader" />
+          <option value="Manager" />
+        </datalist>
+        <span className="text-xs opacity-60">
+          Admin permissions are a separate badge — this is just what you play.
+        </span>
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
         Genres (comma separated, up to 6)
         <input name="genres" maxLength={200} className={input} placeholder="indie, punk, surf rock" />
       </label>

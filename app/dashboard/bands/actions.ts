@@ -28,6 +28,7 @@ export async function createBand(
   const homeCity = String(formData.get("home_city") ?? "").trim();
   const genresRaw = String(formData.get("genres") ?? "").trim();
   const bio = String(formData.get("bio") ?? "").trim() || null;
+  const founderRole = String(formData.get("founder_role") ?? "").trim().slice(0, 60);
 
   if (!name) return { ok: false, error: "Band name is required." };
   if (!homeCity) return { ok: false, error: "Home city is required." };
@@ -50,6 +51,7 @@ export async function createBand(
     p_home_city: homeCity,
     p_genres: genres,
     p_bio: bio ?? "",
+    p_founder_role: founderRole,
   });
 
   if (error) {
