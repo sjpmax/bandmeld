@@ -42,7 +42,7 @@ export default async function BandEpkPage({ params }: Props) {
           <img
             src={band.logo_url}
             alt={`${band.name} logo`}
-            className="h-24 w-24 rounded-xl border border-black/10 object-contain dark:border-white/10 sm:h-32 sm:w-32"
+            className="h-24 w-24 rounded-xl border border-black/10 bg-paper object-contain p-2 dark:border-white/10 sm:h-32 sm:w-32"
           />
         )}
         <div className="flex flex-col gap-2">

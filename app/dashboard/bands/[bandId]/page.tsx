@@ -63,7 +63,7 @@ export default async function BandSettingsPage({
           <img
             src={band.logo_url}
             alt={`${band.name} logo`}
-            className="h-16 w-16 rounded-md border border-black/10 object-contain dark:border-white/10"
+            className="h-16 w-16 rounded-md border border-black/10 bg-paper object-contain p-1 dark:border-white/10"
           />
         )}
         <div>

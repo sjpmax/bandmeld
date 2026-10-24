@@ -121,7 +121,7 @@ export function AssetUploader({
         <img
           src={currentUrl}
           alt={label}
-          className="max-h-32 w-fit rounded-md border border-black/10 object-contain dark:border-white/10"
+          className="max-h-32 w-fit rounded-md border border-black/10 bg-paper object-contain p-1 dark:border-white/10"
         />
       )}
       {currentUrl && preview === "link" && (
