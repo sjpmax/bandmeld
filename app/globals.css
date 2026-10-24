@@ -1,0 +1,25 @@
+@import "tailwindcss";
+@source not "../.vs";
+
+@theme {
+  --color-ink: #141414;
+  --color-paper: #faf8f4;
+  --color-accent: #e8462b;
+  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+}
+
+html {
+  color-scheme: light dark;
+}
+
+body {
+  background: var(--color-paper);
+  color: var(--color-ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  body {
+    background: #0f0f0f;
+    color: #f2efe9;
+  }
+}

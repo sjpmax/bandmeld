@@ -1,0 +1,20 @@
+/**
+ * Centralised env access so a missing key fails loudly with a clear message
+ * instead of an opaque "fetch failed" deep inside the Supabase client.
+ *
+ * NEXT_PUBLIC_* values must be referenced literally (not via process.env[name])
+ * so Next.js can inline them into the browser bundle.
+ */
+export function getSupabaseEnv() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+
+  if (!url || !key) {
+    throw new Error(
+      "Missing Supabase env vars. Set NEXT_PUBLIC_SUPABASE_URL and " +
+        "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY in .env.local (see .env.example).",
+    );
+  }
+
+  return { url, key };
+}
