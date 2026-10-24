@@ -224,6 +224,21 @@ export async function revokeInvite(inviteId: string, bandId: string): Promise<vo
 // -----------------------------------------------------------------------------
 // Member management
 // -----------------------------------------------------------------------------
+export async function setMemberRole(
+  bandId: string,
+  profileId: string,
+  role: string,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_role", {
+    p_band_id: bandId,
+    p_profile_id: profileId,
+    p_role_in_band: role,
+  });
+  if (error) throw error;
+  revalidatePath(`/dashboard/bands/${bandId}`);
+}
+
 export async function setMemberAdmin(
   memberId: string,
   bandId: string,

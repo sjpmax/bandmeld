@@ -12,7 +12,7 @@ export default async function DashboardPage() {
     supabase.from("profiles").select("full_name").eq("id", userId).maybeSingle(),
     supabase
       .from("band_members")
-      .select("is_admin, role_in_band, band:bands (id, name, slug, home_city)")
+      .select("is_admin, role_in_band, band:bands (id, name, slug, home_city, logo_url)")
       .eq("profile_id", userId)
       .order("joined_at", { ascending: true }),
   ]);
@@ -34,17 +34,33 @@ export default async function DashboardPage() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {memberships.map(({ band, is_admin, role_in_band }) =>
             band ? (
-              <li key={band.id} className="rounded-xl border border-black/10 p-4 dark:border-white/10">
-                <Link href={`/dashboard/bands/${band.id}`} className="text-lg font-semibold">
-                  {band.name}
-                </Link>
-                <p className="text-sm opacity-70">
-                  {band.home_city} · {role_in_band}
-                  {is_admin ? " · Admin" : ""}
-                </p>
-                <Link href={`/bands/${band.slug}`} className="mt-2 inline-block text-sm underline">
-                  View public EPK
-                </Link>
+              <li key={band.id} className="flex gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
+                {band.logo_url ? (
+                  <img
+                    src={band.logo_url}
+                    alt={`${band.name} logo`}
+                    className="h-14 w-14 shrink-0 rounded-md border border-black/10 object-contain dark:border-white/10"
+                  />
+                ) : (
+                  <div
+                    aria-hidden
+                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-black/20 text-xs opacity-50 dark:border-white/20"
+                  >
+                    Logo
+                  </div>
+                )}
+                <div className="min-w-0 flex-1">
+                  <Link href={`/dashboard/bands/${band.id}`} className="text-lg font-semibold">
+                    {band.name}
+                  </Link>
+                  <p className="text-sm opacity-70">
+                    {band.home_city} · {role_in_band}
+                    {is_admin ? " · Admin" : ""}
+                  </p>
+                  <Link href={`/bands/${band.slug}`} className="mt-2 inline-block text-sm underline">
+                    View public EPK
+                  </Link>
+                </div>
               </li>
             ) : null,
           )}

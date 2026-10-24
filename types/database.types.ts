@@ -382,6 +382,10 @@ export type Database = {
         Args: { p_invite_id: string };
         Returns: undefined;
       };
+      set_member_role: {
+        Args: { p_band_id: string; p_profile_id: string; p_role_in_band: string };
+        Returns: undefined;
+      };
     };
     Enums: {
       user_role: "band_leader" | "band_member" | "venue_manager" | "creative";

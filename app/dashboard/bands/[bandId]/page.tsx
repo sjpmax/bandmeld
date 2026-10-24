@@ -6,6 +6,7 @@ import { BandSettingsForm } from "@/components/bands/band-settings-form";
 import { AssetUploader } from "@/components/bands/asset-uploader";
 import { InviteMemberForm } from "@/components/bands/invite-member-form";
 import { MemberRowActions } from "@/components/bands/member-row-actions";
+import { MemberRoleEditor } from "@/components/bands/member-role-editor";
 import { InviteRowRevoke } from "@/components/bands/invite-row-revoke";
 
 export const metadata: Metadata = { title: "Band settings" };
@@ -57,7 +58,14 @@ export default async function BandSettingsPage({
 
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-wrap items-start justify-between gap-4">
+      <header className="flex flex-wrap items-center gap-4">
+        {band.logo_url && (
+          <img
+            src={band.logo_url}
+            alt={`${band.name} logo`}
+            className="h-16 w-16 rounded-md border border-black/10 object-contain dark:border-white/10"
+          />
+        )}
         <div>
           <h1 className="text-2xl font-bold sm:text-3xl">{band.name}</h1>
           <p className="opacity-70">
@@ -159,7 +167,12 @@ export default async function BandSettingsPage({
                     {isSelf && <span className="ml-2 text-xs opacity-60">(you)</span>}
                   </p>
                   <p className="text-sm opacity-70">
-                    {m.role_in_band ?? "Member"}
+                    <MemberRoleEditor
+                      bandId={band.id}
+                      profileId={m.profile_id}
+                      currentRole={m.role_in_band ?? "Member"}
+                      canEdit={viewerIsAdmin || isSelf}
+                    />
                     {m.is_admin && (
                       <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
                         Admin

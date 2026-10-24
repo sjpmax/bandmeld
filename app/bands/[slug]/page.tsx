@@ -31,12 +31,21 @@ export default async function BandEpkPage({ params }: Props) {
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{band.name}</h1>
-        <p className="opacity-70">
-          {band.home_city}
-          {band.genres.length > 0 && ` · ${band.genres.join(", ")}`}
-        </p>
+      <header className="flex flex-col items-start gap-4">
+        {band.logo_url && (
+          <img
+            src={band.logo_url}
+            alt={`${band.name} logo`}
+            className="h-24 w-24 rounded-xl border border-black/10 object-contain dark:border-white/10 sm:h-32 sm:w-32"
+          />
+        )}
+        <div className="flex flex-col gap-2">
+          <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">{band.name}</h1>
+          <p className="opacity-70">
+            {band.home_city}
+            {band.genres.length > 0 && ` · ${band.genres.join(", ")}`}
+          </p>
+        </div>
       </header>
 
       {band.bio && <p className="whitespace-pre-line text-lg leading-relaxed">{band.bio}</p>}
