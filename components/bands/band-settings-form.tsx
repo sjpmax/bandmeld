@@ -36,7 +36,7 @@ export function BandSettingsForm({ band }: { band: Band }) {
           inputClassName={input}
         />
         <span className="text-xs opacity-60">
-          Pick from the dropdown to geocode — matters for the Bill Builder&apos;s home-radius filter.
+          Pick from the dropdown to geocode — lets other bands find you by home-radius later.
         </span>
       </label>
 
