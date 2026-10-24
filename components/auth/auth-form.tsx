@@ -61,9 +61,25 @@ export function AuthForm({ mode, next }: { mode: "login" | "signup"; next?: stri
 
       <p className="text-center text-sm opacity-80">
         {mode === "login" ? (
-          <>No account? <Link href="/signup" className="underline">Sign up</Link></>
+          <>
+            No account?{" "}
+            <Link
+              href={next ? `/signup?next=${encodeURIComponent(next)}` : "/signup"}
+              className="underline"
+            >
+              Sign up
+            </Link>
+          </>
         ) : (
-          <>Already have one? <Link href="/login" className="underline">Log in</Link></>
+          <>
+            Already have one?{" "}
+            <Link
+              href={next ? `/login?next=${encodeURIComponent(next)}` : "/login"}
+              className="underline"
+            >
+              Log in
+            </Link>
+          </>
         )}
       </p>
     </form>

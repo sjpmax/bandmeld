@@ -28,6 +28,7 @@ export async function signUp(_prev: ActionResult, formData: FormData): Promise<A
   const fullName = String(formData.get("full_name") ?? "").trim();
   const email = String(formData.get("email") ?? "").trim();
   const password = String(formData.get("password") ?? "");
+  const next = safeNext(formData.get("next"));
 
   if (!fullName) return { ok: false, error: "Please enter your name." };
   if (!email) return { ok: false, error: "Please enter your email." };
@@ -42,7 +43,9 @@ export async function signUp(_prev: ActionResult, formData: FormData): Promise<A
     options: {
       // Picked up by public.handle_new_user() → profiles.full_name
       data: { full_name: fullName },
-      emailRedirectTo: `${siteUrl}/auth/confirm?next=/dashboard`,
+      // Preserve `next` through email confirmation so invite links keep
+      // the user on their original path (e.g. /invite/<token>).
+      emailRedirectTo: `${siteUrl}/auth/confirm?next=${encodeURIComponent(next)}`,
     },
   });
   if (error) return { ok: false, error: error.message };
@@ -50,7 +53,7 @@ export async function signUp(_prev: ActionResult, formData: FormData): Promise<A
   // Email confirmation disabled → user is signed in immediately.
   if (data.session) {
     revalidatePath("/", "layout");
-    redirect("/dashboard");
+    redirect(next);
   }
 
   return { ok: true, message: "Check your email to confirm your account." };
