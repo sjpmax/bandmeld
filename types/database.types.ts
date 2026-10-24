@@ -175,6 +175,7 @@ export type Database = {
           profile_id: string;
           role_in_band: string | null;
           is_admin: boolean | null;
+          is_required_for_gigs: boolean;
           joined_at: string | null;
         };
         Insert: {
@@ -183,6 +184,7 @@ export type Database = {
           profile_id: string;
           role_in_band?: string | null;
           is_admin?: boolean | null;
+          is_required_for_gigs?: boolean;
           joined_at?: string | null;
         };
         Update: {
@@ -191,6 +193,7 @@ export type Database = {
           profile_id?: string;
           role_in_band?: string | null;
           is_admin?: boolean | null;
+          is_required_for_gigs?: boolean;
           joined_at?: string | null;
         };
         Relationships: [
@@ -387,6 +390,10 @@ export type Database = {
       };
       set_member_role: {
         Args: { p_band_id: string; p_profile_id: string; p_role_in_band: string };
+        Returns: undefined;
+      };
+      set_member_required_for_gigs: {
+        Args: { p_band_id: string; p_profile_id: string; p_is_required: boolean };
         Returns: undefined;
       };
     };

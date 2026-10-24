@@ -28,7 +28,7 @@ export default async function BandAvailabilityPage({ params }: Props) {
       .maybeSingle(),
     supabase
       .from("band_members")
-      .select("id, profile_id, role_in_band, is_admin")
+      .select("id, profile_id, role_in_band, is_admin, is_required_for_gigs")
       .eq("band_id", bandId),
     supabase
       .from("band_open_dates")
@@ -59,6 +59,7 @@ export default async function BandAvailabilityPage({ params }: Props) {
   const upcomingDates = (openDates ?? []).filter((d) => d.target_date >= todayIso);
 
   const seekingCount = upcomingDates.filter((d) => d.status === "actively_seeking").length;
+  const conflictsCount = upcomingDates.filter((d) => d.status === "unavailable").length;
   const holdsCount = upcomingDates.filter((d) => d.status === "penciled_in").length;
   const bookedCount = upcomingDates.filter((d) => d.status === "booked").length;
 
@@ -88,12 +89,21 @@ export default async function BandAvailabilityPage({ params }: Props) {
       {/* Roster overview strip */}
       <section className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 bg-black/[0.015] p-3 text-xs dark:border-white/10 dark:bg-white/[0.015]">
         <div className="flex flex-wrap items-center gap-1.5 opacity-80">
-          <span className="font-semibold">Band Roster:</span>
+          <span className="font-semibold">Lineup Requirements:</span>
           {members && members.length > 0 ? (
             members.map((m, idx) => (
-              <span key={m.id}>
-                {profileMap.get(m.profile_id) ?? "Member"}
-                {m.role_in_band ? ` (${m.role_in_band})` : ""}
+              <span key={m.id} className="inline-flex items-center gap-1">
+                <span>{profileMap.get(m.profile_id) ?? "Member"}</span>
+                {m.role_in_band && <span className="opacity-70">({m.role_in_band})</span>}
+                <span
+                  className={`rounded px-1.5 py-0.2 text-[10px] font-semibold border ${
+                    m.is_required_for_gigs ?? true
+                      ? "bg-emerald-500/10 text-emerald-800 border-emerald-500/20 dark:text-emerald-300"
+                      : "bg-amber-500/10 text-amber-800 border-amber-500/20 dark:text-amber-300"
+                  }`}
+                >
+                  {m.is_required_for_gigs ?? true ? "Mandatory" : "Optional"}
+                </span>
                 {idx < members.length - 1 ? " · " : ""}
               </span>
             ))
@@ -101,12 +111,22 @@ export default async function BandAvailabilityPage({ params }: Props) {
             <span>No members</span>
           )}
         </div>
-        <Link
-          href={`/dashboard/availability`}
-          className="underline hover:no-underline text-accent"
-        >
-          Edit your personal availability →
-        </Link>
+        <div className="flex items-center gap-3">
+          {viewerIsAdmin && (
+            <Link
+              href={`/dashboard/bands/${band.id}`}
+              className="underline hover:no-underline font-medium text-accent"
+            >
+              Configure mandatory lineup in Settings →
+            </Link>
+          )}
+          <Link
+            href={`/dashboard/availability`}
+            className="underline hover:no-underline opacity-70 hover:opacity-100"
+          >
+            My availability →
+          </Link>
+        </div>
       </section>
 
       {/* Metrics Bar */}
@@ -117,6 +137,14 @@ export default async function BandAvailabilityPage({ params }: Props) {
             {seekingCount}
           </p>
           <p className="text-[10px] opacity-60">Open show dates</p>
+        </div>
+
+        <div className="rounded-xl border border-black/10 p-3.5 dark:border-white/10">
+          <p className="text-xs opacity-60">Lineup Conflicts</p>
+          <p className="mt-1 text-2xl font-bold text-rose-600 dark:text-rose-400">
+            {conflictsCount}
+          </p>
+          <p className="text-[10px] opacity-60">Blocked by mandatory members</p>
         </div>
 
         <div className="rounded-xl border border-black/10 p-3.5 dark:border-white/10">
@@ -133,12 +161,6 @@ export default async function BandAvailabilityPage({ params }: Props) {
             {bookedCount}
           </p>
           <p className="text-[10px] opacity-60">Booked gigs</p>
-        </div>
-
-        <div className="rounded-xl border border-black/10 p-3.5 dark:border-white/10">
-          <p className="text-xs opacity-60">Sync Window</p>
-          <p className="mt-1 text-2xl font-bold">366</p>
-          <p className="text-[10px] opacity-60">Days forward</p>
         </div>
       </section>
 

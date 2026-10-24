@@ -239,6 +239,22 @@ export async function setMemberRole(
   revalidatePath(`/dashboard/bands/${bandId}`);
 }
 
+export async function setMemberRequiredForGigs(
+  bandId: string,
+  profileId: string,
+  isRequired: boolean,
+): Promise<void> {
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("set_member_required_for_gigs", {
+    p_band_id: bandId,
+    p_profile_id: profileId,
+    p_is_required: isRequired,
+  });
+  if (error) throw error;
+  revalidatePath(`/dashboard/bands/${bandId}`);
+  revalidatePath(`/dashboard/bands/${bandId}/availability`);
+}
+
 export async function setMemberAdmin(
   memberId: string,
   bandId: string,

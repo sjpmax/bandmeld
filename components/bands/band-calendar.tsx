@@ -24,7 +24,7 @@ const STATUS_CONFIG: Record<
     badge:
       "bg-emerald-500/15 text-emerald-800 dark:text-emerald-300 border-emerald-500/30",
     dot: "bg-emerald-500",
-    description: "All members free. Visible on public EPK as open for booking.",
+    description: "All mandatory members free. Open for show booking.",
   },
   penciled_in: {
     label: "Hold",
@@ -40,10 +40,10 @@ const STATUS_CONFIG: Record<
     description: "Confirmed show on this date.",
   },
   unavailable: {
-    label: "Blocked",
-    badge: "bg-zinc-500/15 text-zinc-600 dark:text-zinc-400 border-zinc-500/20",
-    dot: "bg-zinc-400",
-    description: "Band unavailable or taking off on this date.",
+    label: "Blocked / Conflict",
+    badge: "bg-rose-500/15 text-rose-800 dark:text-rose-300 border-rose-500/30",
+    dot: "bg-rose-500",
+    description: "A mandatory band member has a conflict. Cannot gig.",
   },
 };
 
@@ -251,8 +251,8 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
             <span>Booked</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="h-2.5 w-2.5 rounded-full bg-zinc-400" />
-            <span>Blocked</span>
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-500" />
+            <span className="font-medium text-rose-600 dark:text-rose-400">Conflict / Blocked</span>
           </div>
         </div>
       </div>
@@ -288,13 +288,19 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
             const entry = dateMap.get(dateIso);
             const statusConfig = entry?.status ? STATUS_CONFIG[entry.status] : null;
 
+            const isConflict = entry?.status === "unavailable";
+            const isSeeking = entry?.status === "actively_seeking";
+            const hasOptionalAlert = isSeeking && entry?.notes?.startsWith("Lineup:");
+
             return (
               <button
                 key={dateIso}
                 type="button"
                 onClick={() => handleSelectDate(dateIso)}
                 className={`relative flex min-h-24 flex-col justify-between p-2 text-left border-b border-r border-black/10 transition-colors dark:border-white/10 ${
-                  isToday ? "bg-accent/5 font-semibold" : ""
+                  isToday ? "font-semibold" : ""
+                } ${isConflict ? "bg-rose-500/[0.08] dark:bg-rose-500/15" : ""} ${
+                  isToday && !isConflict ? "bg-accent/5" : ""
                 } ${isPast ? "opacity-50" : "hover:bg-black/5 dark:hover:bg-white/5"} ${
                   selectedDateIso === dateIso
                     ? "ring-2 ring-accent ring-inset z-1"
@@ -306,6 +312,8 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
                     className={`inline-flex h-6 w-6 items-center justify-center rounded-full text-xs ${
                       isToday
                         ? "bg-accent text-white font-bold"
+                        : isConflict
+                        ? "text-rose-700 dark:text-rose-300 font-bold"
                         : "opacity-80"
                     }`}
                   >
@@ -313,7 +321,7 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
                   </span>
                   {statusConfig && (
                     <span
-                      className={`h-2 w-2 rounded-full ${statusConfig.dot}`}
+                      className={`h-2.5 w-2.5 rounded-full ${statusConfig.dot}`}
                       title={statusConfig.label}
                     />
                   )}
@@ -324,11 +332,22 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
                     <span
                       className={`truncate rounded px-1.5 py-0.5 text-[10px] font-semibold border ${statusConfig.badge}`}
                     >
-                      {statusConfig.label}
+                      {isConflict ? "Conflict" : statusConfig.label}
                     </span>
                     {entry?.notes && (
-                      <span className="truncate text-[10px] opacity-70">
-                        {entry.notes}
+                      <span
+                        className={`truncate text-[10px] ${
+                          isConflict
+                            ? "text-rose-800 dark:text-rose-300 font-medium"
+                            : hasOptionalAlert
+                            ? "text-amber-800 dark:text-amber-300 font-medium"
+                            : "opacity-70"
+                        }`}
+                        title={entry.notes}
+                      >
+                        {isConflict
+                          ? entry.notes.replace(/^Conflict:\s*/, "").replace(/\s*unavailable$/, "")
+                          : entry.notes}
                       </span>
                     )}
                   </div>
@@ -358,6 +377,32 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
                 ✕
               </button>
             </div>
+
+            {selectedEntry?.status === "unavailable" && (
+              <div className="mt-3 rounded-xl border border-rose-500/30 bg-rose-500/10 p-3 text-xs text-rose-900 dark:text-rose-200">
+                <p className="font-bold flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-rose-500" />
+                  Lineup Conflict Detected
+                </p>
+                <p className="mt-1 font-medium">{selectedEntry.notes}</p>
+                <p className="mt-1 text-[11px] opacity-75">
+                  A member marked as mandatory for shows has a calendar conflict. You can override below if desired.
+                </p>
+              </div>
+            )}
+
+            {selectedEntry?.status === "actively_seeking" && selectedEntry?.notes?.startsWith("Lineup:") && (
+              <div className="mt-3 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-xs text-amber-900 dark:text-amber-200">
+                <p className="font-bold flex items-center gap-1.5">
+                  <span className="h-2 w-2 rounded-full bg-amber-500" />
+                  Partial Lineup Available
+                </p>
+                <p className="mt-1">{selectedEntry.notes}</p>
+                <p className="mt-1 text-[11px] opacity-75">
+                  All mandatory members are free! An optional member is away, but the band can still gig.
+                </p>
+              </div>
+            )}
 
             {viewerIsAdmin ? (
               <div className="mt-5 flex flex-col gap-4">

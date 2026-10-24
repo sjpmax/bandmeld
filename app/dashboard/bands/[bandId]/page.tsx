@@ -9,6 +9,7 @@ import { MemberRowActions } from "@/components/bands/member-row-actions";
 import { MemberRoleEditor } from "@/components/bands/member-role-editor";
 import { InviteRowRevoke } from "@/components/bands/invite-row-revoke";
 import { BandSubNav } from "@/components/bands/band-subnav";
+import { MemberLineupToggle } from "@/components/bands/member-lineup-toggle";
 
 export const metadata: Metadata = { title: "Band settings" };
 
@@ -29,7 +30,7 @@ export default async function BandSettingsPage({
     supabase.from("bands").select("*").eq("id", bandId).maybeSingle(),
     supabase
       .from("band_members")
-      .select("id, profile_id, role_in_band, is_admin, joined_at")
+      .select("id, profile_id, role_in_band, is_admin, is_required_for_gigs, joined_at")
       .eq("band_id", bandId)
       .order("joined_at", { ascending: true }),
     supabase
@@ -122,7 +123,12 @@ export default async function BandSettingsPage({
       )}
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-xl font-semibold">Members ({members?.length ?? 0})</h2>
+        <div className="flex flex-col gap-1">
+          <h2 className="text-xl font-semibold">Members ({members?.length ?? 0})</h2>
+          <p className="text-xs opacity-60">
+            Set roles and toggle who is mandatory for shows. If an optional member is away, the band can still gig.
+          </p>
+        </div>
         <ul className="flex flex-col gap-2">
           {members?.map((m) => {
             const p = profileMap.get(m.profile_id);
@@ -132,24 +138,32 @@ export default async function BandSettingsPage({
                 key={m.id}
                 className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
               >
-                <div>
-                  <p className="font-medium">
-                    {p?.full_name ?? "Member"}
-                    {isSelf && <span className="ml-2 text-xs opacity-60">(you)</span>}
-                  </p>
-                  <p className="text-sm opacity-70">
+                <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="font-medium">
+                      {p?.full_name ?? "Member"}
+                      {isSelf && <span className="ml-1.5 text-xs opacity-60">(you)</span>}
+                    </p>
+                    {m.is_admin && (
+                      <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-semibold text-accent">
+                        Admin
+                      </span>
+                    )}
+                    <MemberLineupToggle
+                      bandId={band.id}
+                      profileId={m.profile_id}
+                      isRequired={m.is_required_for_gigs ?? true}
+                      canEdit={viewerIsAdmin}
+                    />
+                  </div>
+                  <div className="text-sm opacity-70">
                     <MemberRoleEditor
                       bandId={band.id}
                       profileId={m.profile_id}
                       currentRole={m.role_in_band ?? "Member"}
                       canEdit={viewerIsAdmin || isSelf}
                     />
-                    {m.is_admin && (
-                      <span className="ml-2 rounded-full bg-accent/15 px-2 py-0.5 text-xs font-semibold text-accent">
-                        Admin
-                      </span>
-                    )}
-                  </p>
+                  </div>
                 </div>
                 <MemberRowActions
                   memberId={m.id}
