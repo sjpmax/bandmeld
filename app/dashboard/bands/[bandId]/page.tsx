@@ -8,6 +8,7 @@ import { InviteMemberForm } from "@/components/bands/invite-member-form";
 import { MemberRowActions } from "@/components/bands/member-row-actions";
 import { MemberRoleEditor } from "@/components/bands/member-role-editor";
 import { InviteRowRevoke } from "@/components/bands/invite-row-revoke";
+import { BandSubNav } from "@/components/bands/band-subnav";
 
 export const metadata: Metadata = { title: "Band settings" };
 
@@ -58,23 +59,13 @@ export default async function BandSettingsPage({
 
   return (
     <div className="flex flex-col gap-10">
-      <header className="flex flex-wrap items-center gap-4">
-        {band.logo_url && (
-          <img
-            src={band.logo_url}
-            alt={`${band.name} logo`}
-            className="h-16 w-16 rounded-md border border-black/10 bg-paper object-contain p-1 dark:border-white/10"
-          />
-        )}
-        <div>
-          <h1 className="text-2xl font-bold sm:text-3xl">{band.name}</h1>
-          <p className="opacity-70">
-            <Link href={`/bands/${band.slug}`} className="underline hover:no-underline">
-              Public EPK ↗
-            </Link>
-          </p>
-        </div>
-      </header>
+      <BandSubNav
+        bandId={band.id}
+        bandName={band.name}
+        slug={band.slug}
+        logoUrl={band.logo_url}
+        activeTab="settings"
+      />
 
       {!viewerIsAdmin && (
         <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
