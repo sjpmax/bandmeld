@@ -49,6 +49,8 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   type SaveStatus = "idle" | "saving" | "saved" | "unsaved";
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const dirtyRef = useRef(false);
+  const didMountRef = useRef(false);
+  const justDraggedRef = useRef(false);
 
   // Members already placed on the canvas (hidden from the roster tray).
   const placedMemberIds = new Set(
@@ -142,10 +144,15 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
         ...(isGuest ? {} : { member_id: drag.member.member_id }),
       });
     }
+    if (drag.kind === "canvas") justDraggedRef.current = true;
     setDrag({ kind: "none" });
   }
 
   function onBackgroundClick() {
+    if (justDraggedRef.current) {
+      justDraggedRef.current = false;
+      return;
+    }
     setSelectedId(null);
   }
 
@@ -156,8 +163,13 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     }
   }
 
-  // Any state change marks the plot dirty.
+  // Mark the plot dirty on user-driven state changes. Skip the mount pass
+  // so just opening the editor doesn't trigger an unchanged-plot UPDATE.
   useEffect(() => {
+    if (!didMountRef.current) {
+      didMountRef.current = true;
+      return;
+    }
     dirtyRef.current = true;
   }, [plot]);
 
