@@ -42,6 +42,8 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   const [plot, setPlot] = useState<StagePlot>(initialPlot.items ? initialPlot : EMPTY_STAGE_PLOT);
   const [drag, setDrag] = useState<DragState>({ kind: "none" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [nudgeDismissed, setNudgeDismissed] = useState<Set<string>>(new Set());
+  const [nudgeFor, setNudgeFor] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   type SaveStatus = "idle" | "saving" | "saved" | "unsaved";
@@ -65,6 +67,9 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
 
   function addItem(item: StagePlotItem) {
     setPlot((p) => ({ ...p, items: [...p.items, item] }));
+    if (INPUT_LIKE_KINDS.includes(item.kind)) {
+      setNudgeFor(item.id);
+    }
   }
 
   function updateRow(id: string, patch: Partial<import("@/types/stage-plot").InputListRow>) {
@@ -284,6 +289,52 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
                 >
                   ×
                 </button>
+              )}
+              {nudgeFor === item.id && !nudgeDismissed.has(item.id) && (
+                <div className="absolute left-1/2 top-full z-10 mt-2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-md border border-black/15 bg-paper px-2 py-1 text-xs shadow-sm dark:border-white/15 dark:bg-black">
+                  <span>Add to input list?</span>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      const kindLabel = KIND_LABELS[item.kind];
+                      const nextCh = plot.input_list.length === 0
+                        ? 1
+                        : Math.max(...plot.input_list.map((r) => r.channel)) + 1;
+                      setPlot((p) => ({
+                        ...p,
+                        input_list: [
+                          ...p.input_list,
+                          {
+                            id: newId(),
+                            channel: nextCh,
+                            source: item.label ?? kindLabel,
+                            mic: item.kind === "di_box" ? "DI" : "",
+                            phantom: false,
+                          },
+                        ],
+                      }));
+                      setNudgeDismissed((d) => new Set(d).add(item.id));
+                      setNudgeFor(null);
+                    }}
+                    className="rounded bg-accent px-1.5 py-0.5 font-semibold text-black"
+                  >
+                    Add
+                  </button>
+                  <button
+                    type="button"
+                    onPointerDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setNudgeDismissed((d) => new Set(d).add(item.id));
+                      setNudgeFor(null);
+                    }}
+                    className="rounded px-1 opacity-60 hover:opacity-100"
+                  >
+                    ✕
+                  </button>
+                </div>
               )}
             </div>
           );
