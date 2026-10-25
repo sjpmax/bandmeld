@@ -1,6 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
+import { saveStagePlot } from "@/app/dashboard/bands/[bandId]/stage-plot/actions";
 import { StageIcon } from "./icon";
 import {
   EMPTY_STAGE_PLOT,
@@ -41,6 +43,10 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   const [drag, setDrag] = useState<DragState>({ kind: "none" });
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
+
+  type SaveStatus = "idle" | "saving" | "saved" | "unsaved";
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const dirtyRef = useRef(false);
 
   // Members already placed on the canvas (hidden from the roster tray).
   const placedMemberIds = new Set(
@@ -116,12 +122,51 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     }
   }
 
+  // Any state change marks the plot dirty.
+  useEffect(() => {
+    dirtyRef.current = true;
+  }, [plot]);
+
+  useEffect(() => {
+    if (!dirtyRef.current) return;
+    const timer = setTimeout(async () => {
+      dirtyRef.current = false;
+      setSaveStatus("saving");
+
+      let lastError: string | null = null;
+      for (let attempt = 0; attempt < 3; attempt++) {
+        const result = await saveStagePlot(bandId, plot);
+        if (result.ok) {
+          setSaveStatus("saved");
+          setTimeout(() => setSaveStatus((s) => (s === "saved" ? "idle" : s)), 2000);
+          return;
+        }
+        lastError = result.error;
+        await new Promise((r) => setTimeout(r, 300 * (attempt + 1)));
+      }
+      setSaveStatus("unsaved");
+      toast.error(`Couldn't save: ${lastError ?? "unknown error"}`);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, [plot, bandId]);
+
   return (
-    <div
-      className="grid grid-cols-[180px_1fr_240px] gap-4"
-      tabIndex={0}
-      onKeyDown={onKeyDown}
-    >
+    <div className="flex flex-col gap-3" tabIndex={0} onKeyDown={onKeyDown}>
+      <div className="flex items-center justify-end text-xs opacity-70">
+        {saveStatus === "idle" && <span>&nbsp;</span>}
+        {saveStatus === "saving" && <span>Saving…</span>}
+        {saveStatus === "saved" && <span>Saved ✓</span>}
+        {saveStatus === "unsaved" && (
+          <span className="text-red-600">
+            Unsaved changes —{" "}
+            <button type="button" onClick={() => { dirtyRef.current = true; setPlot((p) => ({ ...p })); }} className="underline">
+              retry
+            </button>
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-[180px_1fr_240px] gap-4">
       {/* Tray */}
       <aside className="flex flex-col gap-4 overflow-y-auto">
         <div>
@@ -228,6 +273,7 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
       <aside className="rounded-xl border border-dashed border-black/15 p-3 text-xs opacity-50 dark:border-white/15">
         Input list (next task)
       </aside>
+      </div>
     </div>
   );
 }
