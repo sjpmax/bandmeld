@@ -8,15 +8,15 @@
 
 A top-down stage diagram the band admin assembles in-app and the public EPK renders as inline SVG. The admin drags gear icons and roster members onto a fixed-aspect canvas with "Crowd" labeled at the bottom edge. A separate print-friendly route lets venue engineers Save-as-PDF.
 
-The feature is the **tech-rider diagram path**, not a replacement for the full rider — signal lists, backline requirements, and hospitality stay in the existing `bands.tech_rider_url` PDF (except channel-level inputs, which this feature does include as a sibling panel).
+For most DIY bands this *is* the tech rider — backline is usually supplied by the venue, and hospitality isn't a line item at this scale. The stage plot plus the input list cover what a sound engineer actually needs. The existing `bands.tech_rider_url` PDF stays available for the minority of bands that want to upload a formal rider document, but the two don't need to coexist — each band picks what they send.
 
 ## Scope
 
 **In scope**
 
 - Admin-only drag-drop editor on desktop and tablet (≥768px).
-- Fixed curated gear library (~12 icons) with a labeled-rectangle escape hatch.
-- Person icons auto-populated from `band_members`, carrying each member's `role_in_band`.
+- Fixed curated gear library (~14 icons) with a labeled-rectangle escape hatch. Each amp has its matching instrument icon in the tray (guitar for guitar cab, bass for bass cab).
+- Person icons auto-populated from `band_members`, carrying each member's `role_in_band`. A "+ Guest performer" slot adds a Person with no `member_id` for fill-ins and sit-ins — admin types the label.
 - Fixed-aspect canvas, free-drag, normalized coords, Crowd fixed at bottom.
 - Input list panel (ordered rows: channel, source, mic, phantom, notes) in the same editor, modeled independently from the plot.
 - Public inline SVG on `/bands/[slug]`.
@@ -39,7 +39,7 @@ The feature is the **tech-rider diagram path**, not a replacement for the full r
 Working through the handoff's seven open forks:
 
 1. **Who edits:** admin-only. The admin is often the most-organized member, not necessarily on stage. Person icons are auto-populated from `band_members` so the admin never types a name.
-2. **Gear library:** fixed curated set of ~12 icons (drum kit, bass cab, guitar cab, keys, vocal mic, instrument mic, monitor wedge, DI box, power, riser, person, label) plus a `label` type that renders as a labeled rectangle — the escape hatch for unusual gear without shipping a shape editor.
+2. **Gear library:** fixed curated set of 14 icons (drum kit, bass cab, bass guitar, guitar cab, guitar, keys, vocal mic, instrument mic, monitor wedge, DI box, power, riser, person, label). Every amp has its matching instrument icon so admins can represent "guitar on a stand next to a cab" naturally. The `label` icon renders as a labeled rectangle — the escape hatch for unusual gear without shipping a shape editor.
 3. **Canvas model:** one fixed-aspect rectangle. Icons drag freely; coords stored as normalized 0..1 floats. No grid snap, no aspect presets, no numeric stage dimensions — venues rarely specify, and the simpler UI wins.
 4. **Crowd anchor:** fixed, always at the bottom edge. Matches sound-engineer convention. Adding flip later is a trivial CSS transform.
 5. **Output:** inline SVG on the public EPK plus a print-friendly `/bands/[slug]/stage-plot` route that the user sends through the browser's Save-as-PDF. No server-side PDF toolchain, no client-side canvas library.
@@ -77,13 +77,13 @@ type StagePlot = {
 
 type StagePlotItem = {
   id: string           // crypto.randomUUID()
-  kind: 'drum_kit' | 'bass_cab' | 'guitar_cab' | 'keys' | 'vocal_mic'
-      | 'instrument_mic' | 'monitor_wedge' | 'di_box' | 'power' | 'riser'
-      | 'person' | 'label'
+  kind: 'drum_kit' | 'bass_cab' | 'bass_guitar' | 'guitar_cab' | 'guitar'
+      | 'keys' | 'vocal_mic' | 'instrument_mic' | 'monitor_wedge' | 'di_box'
+      | 'power' | 'riser' | 'person' | 'label'
   x: number            // 0..1 normalized, origin top-left
   y: number            // 0..1 normalized
   label?: string       // required for 'label' and 'person'; optional override elsewhere
-  member_id?: string   // only set when kind === 'person'
+  member_id?: string   // optional on 'person'. Set for roster members; absent for guest performers.
 }
 
 type InputListRow = {
@@ -99,8 +99,8 @@ type InputListRow = {
 Notes:
 
 - `version: 1` lets future schema changes migrate in-code on read.
-- Person icons snapshot `label` at place-time (name + `role_in_band`) so a departed member still renders a readable label until the admin saves.
-- `member_id` lets the editor cross-reference the live `band_members` row — missing row ⇒ render as stale ⇒ drop on next save.
+- Person icons snapshot `label` at place-time (name + `role_in_band`) so the public EPK renders a stable label regardless of roster churn. Guest performers get an admin-typed `label` and no `member_id`.
+- `member_id` lets the editor cross-reference the live `band_members` row on load. When a `member_id` no longer matches a current band member, the editor auto-prunes the item from the loaded state and surfaces a one-line toast ("Removed Jonny — no longer in the band"); autosave persists the pruned plot 2s later. Guest-performer items (no `member_id`) are left alone.
 - Canvas aspect is a renderer constant per Decision 3. **16:9 (1.78) everywhere** — editor, EPK, and print route — so normalized coords land at the same relative position in every surface. In the print route the SVG occupies the top portion of the letter page; the input list fills the rest.
 
 ### Editor UI
@@ -125,7 +125,7 @@ Three-column layout on ≥768px:
 └──────────────┴───────────────────────────────┴───────────┘
 ```
 
-- **Icon tray (left):** gear icons (fixed library) and roster (Person icons from `band_members`, labeled with `role_in_band`). Dragging a tray item to the canvas creates a new `StagePlotItem` at drop coords. Tray roster items disappear from the tray once placed to avoid double-placement.
+- **Icon tray (left):** gear icons (fixed library) and roster (Person icons from `band_members`, labeled with `role_in_band`). A "+ Guest performer" slot at the bottom of the roster section drops a Person with no `member_id`; admin types the label (e.g. "Fiona — fiddle"). Dragging a tray item to the canvas creates a new `StagePlotItem` at drop coords. Tray roster items disappear from the tray once placed to avoid double-placement; the Guest performer slot stays available for additional sit-ins.
 - **Canvas (center):** absolute-positioned icons over an SVG background that renders the stage rectangle + "Crowd" label. Click to select; drag to move; Delete key or inline × removes.
 - **Input list (right):** inline-edit table rows for channel, source, mic (free text), phantom (checkbox), notes. Drag handle reorders; × deletes; "+ add row" appends with next channel.
 - **Save status (top-right):** "Saved" / "Saving…" / "Unsaved changes" (after failed retries).
@@ -167,7 +167,7 @@ The user hits Ctrl+P / Cmd+P and selects "Save as PDF" from the browser dialog. 
 
 ### Edge cases
 
-- **Member leaves after being placed:** `member_id` becomes dangling. Editor renders the icon with a greyed/stale state and a "This member left — remove?" nudge. On next save, the dangling item is dropped. Public EPK renders the stored label normally until the admin saves — pragmatic over strict.
+- **Member leaves after being placed:** on next editor load, items whose `member_id` no longer matches a current `band_members` row are pruned from the loaded state and a one-line toast surfaces ("Removed Jonny — no longer in the band"). Autosave persists the pruned plot. Public EPK renders the stored label until the admin next opens the editor — practical and no stale UI state. Guest-performer items (no `member_id`) are never auto-pruned.
 - **Icon kind retired in a future version:** renderer fallback — unknown `kind` renders as a labeled rectangle with the kind name. `version: 1` on the blob lets a future renderer migrate in-code on read.
 - **Empty state:** dashboard link is always visible to admins; the editor opens on an empty canvas with roster pre-populated in the tray and a one-sentence tip. EPK with null/empty plot hides the section entirely — no placeholder.
 - **Validation failure on save:** Zod rejects → `ActionResult` error → sonner toast ("Couldn't save plot — the data looks corrupt. Reload the page?"). Tripwire for client bugs; shouldn't fire in normal use.
@@ -185,10 +185,11 @@ The project doesn't ship a test framework yet (Phase 1 relies on `npm run typech
   1. New band → open stage plot → tray + canvas render, roster populated in Person section.
   2. Drag three gear icons to the canvas → coords persist across page reload.
   3. Drop a vocal mic → nudge appears → accept → row added to input list with next channel.
-  4. Delete a `band_members` row via SQL → reopen editor → Person icon renders stale with "remove?" nudge → save → icon is gone.
-  5. Public EPK: plot renders inline; input-list table renders below; print link works; Ctrl+P in the print route produces a clean letter-size page.
-  6. Mobile viewport (375px): dashboard stage plot route shows the nudge card, not the editor.
-  7. Non-admin invokes the Server Action directly → rejected.
+  4. Delete a `band_members` row via SQL → reopen editor → the member's Person icon is pruned on load, toast surfaces, autosave fires → reload → icon stays gone.
+  5. Drop a "+ Guest performer" Person → type label → reload → guest icon persists (never pruned).
+  6. Public EPK: plot renders inline; input-list table renders below; print link works; Ctrl+P in the print route produces a clean letter-size page.
+  7. Mobile viewport (375px): dashboard stage plot route shows the nudge card, not the editor.
+  8. Non-admin invokes the Server Action directly → rejected.
 
 **Future test addition** (not this feature's job): the Zod schema and the pure `StagePlotRenderer` are both unit-testable without a browser if Vitest is adopted later.
 
