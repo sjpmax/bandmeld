@@ -16,7 +16,7 @@ type Props = {
 export function StagePlotRenderer({ plot, showGuides = false }: Props) {
   return (
     <div
-      className="relative w-full overflow-hidden rounded-xl border border-black/15 bg-paper dark:border-white/15"
+      className="relative w-full overflow-hidden rounded-xl border border-black/15 bg-paper text-ink dark:border-white/15 dark:bg-[#1a1a1a] dark:text-[#f2efe9]"
       style={{ aspectRatio: "16 / 9" }}
     >
       <svg
