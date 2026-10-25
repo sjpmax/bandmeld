@@ -185,6 +185,25 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     return () => clearTimeout(timer);
   }, [plot, bandId]);
 
+  useEffect(() => {
+    const rosterIds = new Set(roster.map((r) => r.member_id));
+    const dangling = plot.items.filter(
+      (i) => i.kind === "person" && i.member_id && !rosterIds.has(i.member_id),
+    );
+    if (dangling.length === 0) return;
+    for (const item of dangling) {
+      toast(`Removed ${item.label ?? "a member"} — no longer in the band`);
+    }
+    setPlot((p) => ({
+      ...p,
+      items: p.items.filter(
+        (i) => !(i.kind === "person" && i.member_id && !rosterIds.has(i.member_id)),
+      ),
+    }));
+    // Autosave debounce will catch this change on its own.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <div className="flex flex-col gap-3" tabIndex={0} onKeyDown={onKeyDown}>
       <div className="flex items-center justify-end text-xs opacity-70">
