@@ -127,14 +127,19 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     if (drag.kind === "tray-gear" && coords) {
       addItem({ id: newId(), kind: drag.iconKind, x: coords.x, y: coords.y });
     } else if (drag.kind === "tray-roster" && coords) {
-      const label = drag.member.role ? `${drag.member.name} — ${drag.member.role}` : drag.member.name;
+      const isGuest = !drag.member.member_id;
+      const label = isGuest
+        ? "Guest"
+        : drag.member.role
+          ? `${drag.member.name} — ${drag.member.role}`
+          : drag.member.name;
       addItem({
         id: newId(),
         kind: "person",
         x: coords.x,
         y: coords.y,
         label,
-        member_id: drag.member.member_id,
+        ...(isGuest ? {} : { member_id: drag.member.member_id }),
       });
     }
     setDrag({ kind: "none" });
@@ -244,6 +249,22 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
             {availableRoster.length === 0 && (
               <li className="text-xs opacity-50">Everyone placed.</li>
             )}
+            <li>
+              <button
+                type="button"
+                onPointerDown={(e) => {
+                  e.preventDefault();
+                  setDrag({
+                    kind: "tray-roster",
+                    member: { member_id: "", name: "", role: "" },
+                  });
+                }}
+                className="flex w-full items-center gap-2 rounded-md border border-dashed border-black/20 p-1.5 text-left text-xs opacity-70 hover:opacity-100 dark:border-white/20"
+              >
+                <StageIcon kind="person" size={20} />
+                <span>+ Guest performer</span>
+              </button>
+            </li>
           </ul>
         </div>
       </aside>
@@ -289,6 +310,16 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
                 >
                   ×
                 </button>
+              )}
+              {isSelected && item.kind === "person" && !item.member_id && (
+                <input
+                  type="text"
+                  value={item.label ?? ""}
+                  onChange={(e) => updateItem(item.id, { label: e.target.value })}
+                  onPointerDown={(e) => e.stopPropagation()}
+                  placeholder="Name"
+                  className="mt-1 w-32 rounded border border-black/15 bg-paper px-1 text-[10px] dark:border-white/15 dark:bg-black"
+                />
               )}
               {nudgeFor === item.id && !nudgeDismissed.has(item.id) && (
                 <div className="absolute left-1/2 top-full z-10 mt-2 flex -translate-x-1/2 items-center gap-1 whitespace-nowrap rounded-md border border-black/15 bg-paper px-2 py-1 text-xs shadow-sm dark:border-white/15 dark:bg-black">
