@@ -5,7 +5,7 @@ type Props = {
   bandName: string;
   slug: string;
   logoUrl?: string | null;
-  activeTab: "settings" | "availability";
+  activeTab: "settings" | "availability" | "stage-plot";
 };
 
 export function BandSubNav({
@@ -15,7 +15,7 @@ export function BandSubNav({
   logoUrl,
   activeTab,
 }: Props) {
-  const tabClass = (tab: "settings" | "availability") =>
+  const tabClass = (tab: "settings" | "availability" | "stage-plot") =>
     `rounded-lg px-3.5 py-2 text-sm font-medium transition-colors ${
       activeTab === tab
         ? "bg-black text-white dark:bg-white dark:text-black"
@@ -65,6 +65,12 @@ export function BandSubNav({
           className={tabClass("availability")}
         >
           Availability Calendar
+        </Link>
+        <Link
+          href={`/dashboard/bands/${bandId}/stage-plot`}
+          className={tabClass("stage-plot")}
+        >
+          Stage plot
         </Link>
       </nav>
     </div>

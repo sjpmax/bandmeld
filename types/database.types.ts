@@ -70,6 +70,7 @@ export type Database = {
           home_city_lng: number | null;
           avg_local_draw: number | null;
           preferred_gig_days: number[];
+          stage_plot: Json | null;
           is_fake: boolean;
           created_at: string | null;
           updated_at: string | null;
@@ -94,6 +95,7 @@ export type Database = {
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
           preferred_gig_days?: number[];
+          stage_plot?: Json | null;
           is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
@@ -118,6 +120,7 @@ export type Database = {
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
           preferred_gig_days?: number[];
+          stage_plot?: Json | null;
           is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
