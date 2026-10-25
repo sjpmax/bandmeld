@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { getPublicEpk } from "@/lib/epk";
 import { toAppleMusicEmbed, toSpotifyEmbed, toYouTubeEmbed } from "@/lib/embeds";
+import { EpkOpenDates } from "@/components/epk/epk-open-dates";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -80,21 +81,7 @@ export default async function BandEpkPage({ params }: Props) {
         </section>
       )}
 
-      <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Open dates</h2>
-        {band.open_dates.length > 0 ? (
-          <ul className="flex flex-wrap gap-2">
-            {band.open_dates.map((d) => (
-              <li key={d.target_date} className="rounded-full border border-current/20 px-3 py-1 text-sm">
-                {dateFmt.format(new Date(`${d.target_date}T00:00:00Z`))}
-                {d.status === "penciled_in" && <span className="opacity-60"> · hold</span>}
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="opacity-70">No open dates posted right now.</p>
-        )}
-      </section>
+      <EpkOpenDates openDates={band.open_dates ?? []} bandName={band.name} />
 
       {(band.spotify_url ||
         band.apple_music_url ||

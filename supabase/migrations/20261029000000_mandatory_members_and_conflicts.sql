@@ -158,3 +158,4 @@ BEGIN
      OR (public.band_open_dates.status = 'actively_seeking');
 END;
 $$;
+

@@ -23,7 +23,7 @@ export default async function BandAvailabilityPage({ params }: Props) {
   ] = await Promise.all([
     supabase
       .from("bands")
-      .select("id, name, slug, logo_url")
+      .select("id, name, slug, logo_url, preferred_gig_days")
       .eq("id", bandId)
       .maybeSingle(),
     supabase
@@ -178,6 +178,7 @@ export default async function BandAvailabilityPage({ params }: Props) {
         <BandCalendar
           bandId={band.id}
           openDates={openDates ?? []}
+          preferredGigDays={band.preferred_gig_days ?? [5, 6]}
           viewerIsAdmin={viewerIsAdmin}
         />
       </section>

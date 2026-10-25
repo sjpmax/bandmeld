@@ -6,12 +6,14 @@ import type { BandOpenDate, GigStatus } from "@/types";
 import {
   clearBandDateAction,
   setBandDateStatusAction,
+  setBandPreferredGigDaysAction,
   syncBandAvailabilityAction,
 } from "@/app/dashboard/bands/[bandId]/availability/actions";
 
 type Props = {
   bandId: string;
   openDates: BandOpenDate[];
+  preferredGigDays?: number[];
   viewerIsAdmin: boolean;
 };
 
@@ -54,10 +56,16 @@ function toIsoString(date: Date) {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
+export function BandCalendar({
+  bandId,
+  openDates,
+  preferredGigDays,
+  viewerIsAdmin,
+}: Props) {
   const today = useMemo(() => new Date(), []);
   const todayIso = useMemo(() => toIsoString(today), [today]);
 
+  const [gigDays, setGigDays] = useState<number[]>(preferredGigDays ?? [5, 6]);
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth()); // 0-indexed
 
@@ -122,6 +130,39 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
     }
   }
 
+  function handleToggleGigDay(day: number) {
+    if (!viewerIsAdmin || isSyncing) return;
+    const next = gigDays.includes(day)
+      ? gigDays.filter((d) => d !== day)
+      : [...gigDays, day].sort();
+    if (next.length === 0) {
+      toast.error("Please select at least one target gig day.");
+      return;
+    }
+    setGigDays(next);
+    startSyncTransition(async () => {
+      const res = await setBandPreferredGigDaysAction(bandId, next);
+      if (res.ok) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.error);
+      }
+    });
+  }
+
+  function handleApplyPreset(preset: number[]) {
+    if (!viewerIsAdmin || isSyncing) return;
+    setGigDays(preset);
+    startSyncTransition(async () => {
+      const res = await setBandPreferredGigDaysAction(bandId, preset);
+      if (res.ok) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.error);
+      }
+    });
+  }
+
   function handleSyncAvailability() {
     startSyncTransition(async () => {
       const res = await syncBandAvailabilityAction(bandId);
@@ -177,33 +218,101 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
   return (
     <div className="flex flex-col gap-6">
       {/* Top action and sync bar */}
-      <div className="flex flex-wrap items-center justify-between gap-4 rounded-xl border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
-        <div>
-          <h2 className="text-base font-semibold">Consolidated Schedule Sync</h2>
-          <p className="text-xs opacity-70">
-            Overlays all members&apos; unavailabilities across the next 366 days.
-          </p>
+      <div className="flex flex-col gap-4 rounded-xl border border-black/10 bg-black/[0.02] p-4 dark:border-white/10 dark:bg-white/[0.02]">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-base font-semibold">Target Gig Days & Schedule Sync</h2>
+            <p className="text-xs opacity-70">
+              Only target show days will be marked for booking on your public EPK. Weekdays stay quiet.
+            </p>
+          </div>
+
+          {viewerIsAdmin ? (
+            <button
+              type="button"
+              onClick={handleSyncAvailability}
+              disabled={isSyncing}
+              className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
+            >
+              {isSyncing ? (
+                <>
+                  <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Syncing...
+                </>
+              ) : (
+                <>🔄 Sync with Member Calendars</>
+              )}
+            </button>
+          ) : (
+            <span className="text-xs opacity-60">Admin required to sync</span>
+          )}
         </div>
 
-        {viewerIsAdmin ? (
-          <button
-            type="button"
-            onClick={handleSyncAvailability}
-            disabled={isSyncing}
-            className="flex items-center gap-2 rounded-full bg-accent px-4 py-2 text-sm font-medium text-white transition-opacity hover:opacity-90 disabled:opacity-50"
-          >
-            {isSyncing ? (
-              <>
-                <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Syncing...
-              </>
-            ) : (
-              <>🔄 Sync with Member Calendars</>
-            )}
-          </button>
-        ) : (
-          <span className="text-xs opacity-60">Admin required to sync</span>
-        )}
+        {/* Gig days selector */}
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t border-black/10 pt-3 dark:border-white/10 text-xs">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="font-semibold opacity-80">Show Nights:</span>
+            <div className="flex flex-wrap items-center gap-1">
+              {[
+                { label: "Sun", val: 0 },
+                { label: "Mon", val: 1 },
+                { label: "Tue", val: 2 },
+                { label: "Wed", val: 3 },
+                { label: "Thu", val: 4 },
+                { label: "Fri", val: 5 },
+                { label: "Sat", val: 6 },
+              ].map(({ label, val }) => {
+                const isActive = gigDays.includes(val);
+                return (
+                  <button
+                    key={val}
+                    type="button"
+                    disabled={!viewerIsAdmin || isSyncing}
+                    onClick={() => handleToggleGigDay(val)}
+                    title={`Click to ${isActive ? "exclude" : "include"} ${label} from gig sync`}
+                    className={`rounded-lg px-2.5 py-1 font-semibold transition-all border ${
+                      isActive
+                        ? "bg-accent text-white border-accent shadow-xs"
+                        : "border-black/10 opacity-60 hover:opacity-100 hover:border-black/30 dark:border-white/10 dark:hover:border-white/30"
+                    } disabled:opacity-50`}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {viewerIsAdmin && (
+            <div className="flex flex-wrap items-center gap-1.5 opacity-80">
+              <span className="text-[11px] opacity-60">Presets:</span>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset([5, 6])}
+                disabled={isSyncing}
+                className="rounded-md border border-black/10 px-2 py-0.5 text-[11px] font-medium hover:border-current dark:border-white/10"
+              >
+                Weekends (Fri/Sat)
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset([4, 5, 6])}
+                disabled={isSyncing}
+                className="rounded-md border border-black/10 px-2 py-0.5 text-[11px] font-medium hover:border-current dark:border-white/10"
+              >
+                Thu + Weekends
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyPreset([0, 1, 2, 3, 4, 5, 6])}
+                disabled={isSyncing}
+                className="rounded-md border border-black/10 px-2 py-0.5 text-[11px] font-medium hover:border-current dark:border-white/10"
+              >
+                All days
+              </button>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Legend & Month Navigation */}
@@ -261,11 +370,25 @@ export function BandCalendar({ bandId, openDates, viewerIsAdmin }: Props) {
       <div className="rounded-xl border border-black/10 overflow-hidden bg-white/40 dark:border-white/10 dark:bg-white/[0.02]">
         {/* Weekday headers */}
         <div className="grid grid-cols-7 border-b border-black/10 bg-black/[0.03] text-center text-xs font-semibold py-2.5 dark:border-white/10 dark:bg-white/[0.04]">
-          {WEEKDAYS.map((day) => (
-            <div key={day} className="opacity-70">
-              {day}
-            </div>
-          ))}
+          {WEEKDAYS.map((day, idx) => {
+            const isTargetDay = gigDays.includes(idx);
+            return (
+              <div
+                key={day}
+                className={`flex items-center justify-center gap-1 ${
+                  isTargetDay ? "font-bold text-ink dark:text-white" : "opacity-50"
+                }`}
+              >
+                <span>{day}</span>
+                {isTargetDay && (
+                  <span
+                    className="h-1.5 w-1.5 rounded-full bg-accent"
+                    title="Target show day"
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
         {/* Days grid */}

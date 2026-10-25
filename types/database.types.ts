@@ -69,6 +69,7 @@ export type Database = {
           home_city_lat: number | null;
           home_city_lng: number | null;
           avg_local_draw: number | null;
+          preferred_gig_days: number[];
           is_fake: boolean;
           created_at: string | null;
           updated_at: string | null;
@@ -92,6 +93,7 @@ export type Database = {
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
+          preferred_gig_days?: number[];
           is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
@@ -115,6 +117,7 @@ export type Database = {
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
+          preferred_gig_days?: number[];
           is_fake?: boolean;
           created_at?: string | null;
           updated_at?: string | null;
@@ -394,6 +397,10 @@ export type Database = {
       };
       set_member_required_for_gigs: {
         Args: { p_band_id: string; p_profile_id: string; p_is_required: boolean };
+        Returns: undefined;
+      };
+      set_band_preferred_gig_days: {
+        Args: { p_band_id: string; p_preferred_days: number[] };
         Returns: undefined;
       };
     };

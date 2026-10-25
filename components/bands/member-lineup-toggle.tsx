@@ -71,3 +71,4 @@ export function MemberLineupToggle({ bandId, profileId, isRequired, canEdit }: P
     </button>
   );
 }
+

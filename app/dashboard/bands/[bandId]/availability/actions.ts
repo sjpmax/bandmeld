@@ -50,6 +50,29 @@ export async function syncBandAvailabilityAction(
 }
 
 /**
+ * Updates the band's preferred gig days (e.g. [5, 6] for Fri/Sat),
+ * and immediately triggers a sync to purge non-preferred days.
+ */
+export async function setBandPreferredGigDaysAction(
+  bandId: string,
+  days: number[],
+): Promise<ActionResult<{ count: number }>> {
+  const supabase = await createClient();
+
+  const { error } = await supabase.rpc("set_band_preferred_gig_days", {
+    p_band_id: bandId,
+    p_preferred_days: days,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  // Re-sync to immediately apply the filter
+  return syncBandAvailabilityAction(bandId);
+}
+
+/**
  * Updates or creates a status entry for a specific date on the band's calendar.
  * Admin-only (enforced by RLS on band_open_dates).
  */
