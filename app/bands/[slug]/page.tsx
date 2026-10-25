@@ -3,6 +3,9 @@ import { notFound } from "next/navigation";
 import { getPublicEpk } from "@/lib/epk";
 import { toAppleMusicEmbed, toSpotifyEmbed, toYouTubeEmbed } from "@/lib/embeds";
 import { EpkOpenDates } from "@/components/epk/epk-open-dates";
+import { parseStagePlot } from "@/types/stage-plot";
+import { StagePlotRenderer } from "@/components/stage-plot/renderer";
+import { InputListView } from "@/components/stage-plot/input-list-view";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -22,6 +25,9 @@ export default async function BandEpkPage({ params }: Props) {
   const { slug } = await params;
   const band = await getPublicEpk(slug);
   if (!band) notFound();
+
+  const plot = parseStagePlot(band.stage_plot);
+  const hasPlot = plot.items.length > 0;
 
   const spotify = toSpotifyEmbed(band.spotify_url);
   const appleMusic = toAppleMusicEmbed(band.apple_music_url);
@@ -77,6 +83,26 @@ export default async function BandEpkPage({ params }: Props) {
           {youtube && (
             <iframe src={youtube} title={`${band.name} on YouTube`} loading="lazy" allowFullScreen
               allow="encrypted-media; picture-in-picture" className="aspect-video w-full rounded-xl border-0" />
+          )}
+        </section>
+      )}
+
+      {hasPlot && (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-baseline justify-between gap-3">
+            <h2 className="text-xl font-semibold tracking-tight">Stage plot</h2>
+            <a
+              href={`/bands/${band.slug}/stage-plot`}
+              className="text-xs font-semibold opacity-70 hover:opacity-100"
+            >
+              Printable version →
+            </a>
+          </div>
+          <StagePlotRenderer plot={plot} />
+          {plot.input_list.length > 0 && (
+            <div className="mt-2 overflow-x-auto">
+              <InputListView rows={plot.input_list} />
+            </div>
           )}
         </section>
       )}
