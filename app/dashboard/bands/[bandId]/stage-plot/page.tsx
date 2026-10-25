@@ -65,6 +65,22 @@ export default async function StagePlotEditorPage({
 
       {viewerIsAdmin && (
         <>
+          {/* How-to card — shown on tablet/desktop where the editor is usable */}
+          <div className="hidden rounded-xl border border-black/10 bg-black/[0.02] p-4 text-sm leading-relaxed md:block dark:border-white/10 dark:bg-white/[0.03]">
+            <p className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-60">
+              How this works
+            </p>
+            <p>
+              Drag items from the <strong>Gear</strong> or <strong>Roster</strong> tray onto the stage.
+              The <strong>Crowd</strong> label marks where the audience will be — place performers near it, backline toward the back.
+              Dropping a mic or DI box offers to add a prefilled row to the <strong>Input list</strong> on the right (accept or dismiss).
+              Use <strong>+ Guest performer</strong> for sit-ins who aren&apos;t in your roster.
+              Click an item to select it, then drag to move or press <kbd className="rounded border border-current/30 px-1 text-xs">Delete</kbd> to remove.
+              Changes save automatically.
+              The public version lives on your EPK with a <strong>Printable version</strong> link for venues.
+            </p>
+          </div>
+
           {/* Mobile nudge */}
           <div className="md:hidden">
             <StagePlotMobileNudge bandSlug={band.slug} />
