@@ -44,6 +44,7 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [nudgeDismissed, setNudgeDismissed] = useState<Set<string>>(new Set());
   const [nudgeFor, setNudgeFor] = useState<string | null>(null);
+  const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
   const canvasRef = useRef<HTMLDivElement>(null);
 
   type SaveStatus = "idle" | "saving" | "saved" | "unsaved";
@@ -162,6 +163,27 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
       deleteItem(selectedId);
     }
   }
+
+  // While a tray drag is in progress, track the cursor at the document level
+  // so a ghost icon can follow it, and clear drag state on pointerup even if
+  // the user releases outside the canvas (prevents stuck drag state).
+  useEffect(() => {
+    const isTrayDrag = drag.kind === "tray-gear" || drag.kind === "tray-roster";
+    if (!isTrayDrag) {
+      setGhost(null);
+      return;
+    }
+    const onMove = (e: PointerEvent) => setGhost({ x: e.clientX, y: e.clientY });
+    const onUp = () => setDrag({ kind: "none" });
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+    document.body.style.cursor = "grabbing";
+    return () => {
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      document.body.style.cursor = "";
+    };
+  }, [drag.kind]);
 
   // Mark the plot dirty on user-driven state changes. Skip the mount pass
   // so just opening the editor doesn't trigger an unchanged-plot UPDATE.
@@ -307,7 +329,7 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
         onPointerUp={onCanvasPointerUp}
         onPointerLeave={onCanvasPointerUp}
         onClick={onBackgroundClick}
-        className="relative w-full overflow-hidden rounded-xl border border-black/15 bg-paper dark:border-white/15"
+        className="relative w-full overflow-hidden rounded-xl border border-black/15 bg-paper text-ink dark:border-white/15 dark:bg-[#1a1a1a] dark:text-[#f2efe9]"
         style={{ aspectRatio: "16 / 9", touchAction: "none" }}
       >
         {plot.items.map((item) => {
@@ -472,6 +494,25 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
         </button>
       </aside>
       </div>
+
+      {ghost && (drag.kind === "tray-gear" || drag.kind === "tray-roster") && (
+        <div
+          style={{
+            position: "fixed",
+            left: ghost.x,
+            top: ghost.y,
+            pointerEvents: "none",
+            transform: "translate(-50%, -50%)",
+            zIndex: 50,
+            opacity: 0.85,
+          }}
+        >
+          <StageIcon
+            kind={drag.kind === "tray-gear" ? drag.iconKind : "person"}
+            size={44}
+          />
+        </div>
+      )}
     </div>
   );
 }
