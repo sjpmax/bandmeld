@@ -15,7 +15,7 @@ For most DIY bands this *is* the tech rider — backline is usually supplied by 
 **In scope**
 
 - Admin-only drag-drop editor on desktop and tablet (≥768px).
-- Fixed curated gear library (~14 icons) with a labeled-rectangle escape hatch. Each amp has its matching instrument icon in the tray (guitar for guitar cab, bass for bass cab).
+- Fixed curated gear library (~14 icons) with a labeled-rectangle escape hatch. Each amp has its matching instrument icon in the tray so admins can place both (guitar for guitar cab, bass for bass cab). The two icons are independent — guitars live with players at the front of the stage, cabs sit at the back.
 - Person icons auto-populated from `band_members`, carrying each member's `role_in_band`. A "+ Guest performer" slot adds a Person with no `member_id` for fill-ins and sit-ins — admin types the label.
 - Fixed-aspect canvas, free-drag, normalized coords, Crowd fixed at bottom.
 - Input list panel (ordered rows: channel, source, mic, phantom, notes) in the same editor, modeled independently from the plot.
@@ -39,7 +39,7 @@ For most DIY bands this *is* the tech rider — backline is usually supplied by 
 Working through the handoff's seven open forks:
 
 1. **Who edits:** admin-only. The admin is often the most-organized member, not necessarily on stage. Person icons are auto-populated from `band_members` so the admin never types a name.
-2. **Gear library:** fixed curated set of 14 icons (drum kit, bass cab, bass guitar, guitar cab, guitar, keys, vocal mic, instrument mic, monitor wedge, DI box, power, riser, person, label). Every amp has its matching instrument icon so admins can represent "guitar on a stand next to a cab" naturally. The `label` icon renders as a labeled rectangle — the escape hatch for unusual gear without shipping a shape editor.
+2. **Gear library:** fixed curated set of 14 icons (drum kit, bass cab, bass guitar, guitar cab, guitar, keys, vocal mic, instrument mic, monitor wedge, DI box, power, riser, person, label). Instruments and amps are independent placeable items — the guitar goes with the player at the front, the cab sits at the back — the tray just includes both so the plot can match physical reality. The `label` icon renders as a labeled rectangle — the escape hatch for unusual gear without shipping a shape editor.
 3. **Canvas model:** one fixed-aspect rectangle. Icons drag freely; coords stored as normalized 0..1 floats. No grid snap, no aspect presets, no numeric stage dimensions — venues rarely specify, and the simpler UI wins.
 4. **Crowd anchor:** fixed, always at the bottom edge. Matches sound-engineer convention. Adding flip later is a trivial CSS transform.
 5. **Output:** inline SVG on the public EPK plus a print-friendly `/bands/[slug]/stage-plot` route that the user sends through the browser's Save-as-PDF. No server-side PDF toolchain, no client-side canvas library.
