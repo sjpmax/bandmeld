@@ -67,6 +67,30 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     setPlot((p) => ({ ...p, items: [...p.items, item] }));
   }
 
+  function updateRow(id: string, patch: Partial<import("@/types/stage-plot").InputListRow>) {
+    setPlot((p) => ({
+      ...p,
+      input_list: p.input_list.map((r) => (r.id === id ? { ...r, ...patch } : r)),
+    }));
+  }
+
+  function deleteRow(id: string) {
+    setPlot((p) => ({ ...p, input_list: p.input_list.filter((r) => r.id !== id) }));
+  }
+
+  function addRow() {
+    const nextCh = plot.input_list.length === 0
+      ? 1
+      : Math.max(...plot.input_list.map((r) => r.channel)) + 1;
+    setPlot((p) => ({
+      ...p,
+      input_list: [
+        ...p.input_list,
+        { id: newId(), channel: nextCh, source: "", mic: "", phantom: false },
+      ],
+    }));
+  }
+
   function canvasCoords(clientX: number, clientY: number): { x: number; y: number } | null {
     const rect = canvasRef.current?.getBoundingClientRect();
     if (!rect) return null;
@@ -269,9 +293,70 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
         </div>
       </div>
 
-      {/* Right rail placeholder — input list panel added in Task 14 */}
-      <aside className="rounded-xl border border-dashed border-black/15 p-3 text-xs opacity-50 dark:border-white/15">
-        Input list (next task)
+      <aside className="flex flex-col gap-2">
+        <h3 className="text-xs font-semibold uppercase tracking-wide opacity-60">Input list</h3>
+        <div className="flex flex-col gap-1 overflow-y-auto">
+          {plot.input_list.map((row) => (
+            <div
+              key={row.id}
+              className="grid grid-cols-[32px_1fr_28px] gap-1 rounded-md border border-black/10 p-1.5 text-xs dark:border-white/15"
+            >
+              <input
+                type="number"
+                min={1}
+                max={99}
+                value={row.channel}
+                onChange={(e) => updateRow(row.id, { channel: Number(e.target.value) || 1 })}
+                className="w-full rounded border border-black/10 bg-transparent px-1 text-center font-mono tabular-nums dark:border-white/15"
+                aria-label="Channel"
+              />
+              <div className="flex flex-col gap-1">
+                <input
+                  type="text"
+                  placeholder="Source (Kick, Vox 1…)"
+                  value={row.source}
+                  onChange={(e) => updateRow(row.id, { source: e.target.value })}
+                  className="w-full rounded border border-black/10 bg-transparent px-1 dark:border-white/15"
+                />
+                <input
+                  type="text"
+                  placeholder="Mic / DI"
+                  value={row.mic}
+                  onChange={(e) => updateRow(row.id, { mic: e.target.value })}
+                  className="w-full rounded border border-black/10 bg-transparent px-1 dark:border-white/15"
+                />
+                <label className="flex items-center gap-1 text-[10px] opacity-70">
+                  <input
+                    type="checkbox"
+                    checked={row.phantom}
+                    onChange={(e) => updateRow(row.id, { phantom: e.target.checked })}
+                  />
+                  +48V
+                </label>
+              </div>
+              <button
+                type="button"
+                onClick={() => deleteRow(row.id)}
+                className="flex items-start justify-end text-base opacity-50 hover:opacity-100"
+                aria-label="Remove row"
+              >
+                ×
+              </button>
+            </div>
+          ))}
+          {plot.input_list.length === 0 && (
+            <p className="rounded-md border border-dashed border-black/15 p-2 text-xs opacity-60 dark:border-white/15">
+              No inputs yet.
+            </p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={addRow}
+          className="self-start rounded-md border border-black/15 px-2 py-1 text-xs hover:border-current dark:border-white/20"
+        >
+          + Add row
+        </button>
       </aside>
       </div>
     </div>
