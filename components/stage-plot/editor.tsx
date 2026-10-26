@@ -45,7 +45,15 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   const [nudgeDismissed, setNudgeDismissed] = useState<Set<string>>(new Set());
   const [nudgeFor, setNudgeFor] = useState<string | null>(null);
   const [ghost, setGhost] = useState<{ x: number; y: number } | null>(null);
+  const [trashHover, setTrashHover] = useState(false);
   const canvasRef = useRef<HTMLDivElement>(null);
+  const trashRef = useRef<HTMLDivElement>(null);
+
+  function pointerOverTrash(clientX: number, clientY: number): boolean {
+    const r = trashRef.current?.getBoundingClientRect();
+    if (!r) return false;
+    return clientX >= r.left && clientX <= r.right && clientY >= r.top && clientY <= r.bottom;
+  }
 
   type SaveStatus = "idle" | "saving" | "saved" | "unsaved";
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
@@ -123,13 +131,23 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
     const coords = canvasCoords(e.clientX, e.clientY);
     if (!coords) return;
     updateItem(drag.itemId, { x: clamp01(coords.x - drag.offsetX), y: clamp01(coords.y - drag.offsetY) });
+    setTrashHover(pointerOverTrash(e.clientX, e.clientY));
   }
 
   function onCanvasPointerUp(e: React.PointerEvent) {
+    // Only treat genuine pointer releases as drops. pointerleave fires with
+    // this handler too, and letting it delete an item mid-drag off the canvas
+    // edge toward the trash loses items on an accidental scrub-out.
+    const isDrop = e.type === "pointerup";
     const coords = canvasCoords(e.clientX, e.clientY);
-    if (drag.kind === "tray-gear" && coords) {
+    if (drag.kind === "canvas") {
+      if (isDrop && pointerOverTrash(e.clientX, e.clientY)) {
+        deleteItem(drag.itemId);
+      }
+      if (isDrop) justDraggedRef.current = true;
+    } else if (drag.kind === "tray-gear" && coords && isDrop) {
       addItem({ id: newId(), kind: drag.iconKind, x: coords.x, y: coords.y });
-    } else if (drag.kind === "tray-roster" && coords) {
+    } else if (drag.kind === "tray-roster" && coords && isDrop) {
       const isGuest = !drag.member.member_id;
       const label = isGuest
         ? "Guest"
@@ -145,7 +163,7 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
         ...(isGuest ? {} : { member_id: drag.member.member_id }),
       });
     }
-    if (drag.kind === "canvas") justDraggedRef.current = true;
+    setTrashHover(false);
     setDrag({ kind: "none" });
   }
 
@@ -319,6 +337,30 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
               </button>
             </li>
           </ul>
+        </div>
+
+        {/* Trash drop zone — drag an item from the canvas here to remove it */}
+        <div
+          ref={trashRef}
+          className={`mt-2 flex flex-col items-center justify-center gap-1 rounded-md border-2 border-dashed p-3 text-xs transition-colors ${
+            drag.kind === "canvas"
+              ? trashHover
+                ? "border-red-500 bg-red-500/15 text-red-600 dark:text-red-400"
+                : "border-red-500/50 text-red-600/80 dark:text-red-400/80"
+              : "border-black/15 opacity-50 dark:border-white/15"
+          }`}
+          aria-label="Drag items here to remove"
+        >
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+            <polyline points="3 6 5 6 21 6" />
+            <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6" />
+            <path d="M10 11v6" />
+            <path d="M14 11v6" />
+            <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2" />
+          </svg>
+          <span className="text-center leading-tight">
+            {drag.kind === "canvas" ? "Drop to remove" : "Drag here to remove"}
+          </span>
         </div>
       </aside>
 
