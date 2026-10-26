@@ -436,7 +436,7 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
                             id: newId(),
                             channel: nextCh,
                             source: item.label ?? kindLabel,
-                            mic: item.kind === "di_box" ? "DI" : "",
+                            mic: "",
                             phantom: false,
                           },
                         ],
