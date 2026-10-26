@@ -33,6 +33,7 @@ const timeFmt = new Intl.DateTimeFormat("en-US", {
 
 type SearchParams = {
   imported?: string;
+  skipped?: string;
   connect_error?: string;
   import_error?: string;
 };
@@ -76,6 +77,11 @@ export default async function MyAvailabilityPage({
       {sp.imported && (
         <p className="rounded-xl border border-green-500/40 bg-green-500/10 p-3 text-sm">
           Imported {sp.imported} event{sp.imported === "1" ? "" : "s"} from Google Calendar.
+          {sp.skipped && Number(sp.skipped) > 0 && (
+            <>
+              {" "}Skipped {sp.skipped} already in your blocks.
+            </>
+          )}
         </p>
       )}
       {sp.connect_error && (
@@ -83,11 +89,20 @@ export default async function MyAvailabilityPage({
           Google Calendar connection error: {sp.connect_error}
         </p>
       )}
-      {sp.import_error && (
+      {sp.import_error === "all_duplicates" ? (
+        <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
+          Everything you selected was already in your blocks.
+          {sp.skipped && ` Skipped ${sp.skipped}.`}
+        </p>
+      ) : sp.import_error === "nothing_selected" ? (
+        <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm">
+          You didn&apos;t pick any events.
+        </p>
+      ) : sp.import_error ? (
         <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm">
           Import error: {sp.import_error}
         </p>
-      )}
+      ) : null}
 
       <section className="flex flex-col gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
         <div className="flex flex-wrap items-center justify-between gap-3">
