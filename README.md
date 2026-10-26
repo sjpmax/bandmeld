@@ -17,25 +17,29 @@ Full product spec: [band snap PRD.md](./band%20snap%20PRD.md).
 
 ### Phase 1 progress
 
-Scaffolded:
+Built:
 - Auth (signup, login, email confirm, sign out) — [app/(auth)/](app/(auth)/), [app/auth/confirm/route.ts](app/auth/confirm/route.ts)
 - Supabase schema + RLS + RPCs — [supabase/migrations/](supabase/migrations/)
-- `create_band` RPC (makes creator admin, enforces unique slug)
-- `sync_band_open_dates` RPC (next 366 days, member unavailability → `actively_seeking`)
+- `create_band` RPC (makes creator admin, enforces unique slug) + create-band form
+- `sync_band_open_dates` RPC (next 366 days, member unavailability → `actively_seeking`) + preferred gig days filter
 - `band-assets` storage bucket (logo / press / rider), admin-write / public-read
 - Dashboard shell listing user's bands — [app/dashboard/page.tsx](app/dashboard/page.tsx)
-- Public EPK skeleton with Spotify / YouTube embeds + open dates — [app/bands/[slug]/page.tsx](app/bands/[slug]/page.tsx)
-- My-availability picker (add / remove unavailability blocks) — [app/dashboard/availability/page.tsx](app/dashboard/availability/page.tsx)
-- Google Calendar import (OAuth, review-then-apply) — [app/dashboard/availability/import/page.tsx](app/dashboard/availability/import/page.tsx), [lib/google-calendar.ts](lib/google-calendar.ts)
+- Band settings (bio, links, genres, social) + uploads + roster + role editing + mandatory-member toggle — [app/dashboard/bands/[bandId]/page.tsx](app/dashboard/bands/[bandId]/page.tsx)
+- Band calendar with interactive flip states (`actively_seeking` ↔ `penciled_in` ↔ `booked`) + conflict detection — [app/dashboard/bands/[bandId]/availability/page.tsx](app/dashboard/bands/[bandId]/availability/page.tsx)
+- Band invites with `band_invites` table, email-locked tokens, `/invite/[token]` accept flow preserving token through sign-up — [app/invite/[token]/page.tsx](app/invite/[token]/page.tsx)
+- Public EPK with Spotify / Apple Music / YouTube embeds + open dates + stage plot — [app/bands/[slug]/page.tsx](app/bands/[slug]/page.tsx)
+- Stage plot editor (drag-drop canvas + input list) + print-friendly route — [app/dashboard/bands/[bandId]/stage-plot/](app/dashboard/bands/[bandId]/stage-plot/)
+- My-availability picker (add / remove unavailability blocks, tentative/firm) — [app/dashboard/availability/page.tsx](app/dashboard/availability/page.tsx)
+- Google Calendar import (OAuth, review-then-apply, dedupe) — [app/dashboard/availability/import/page.tsx](app/dashboard/availability/import/page.tsx), [lib/google-calendar.ts](lib/google-calendar.ts)
+- Apple Calendar `.ics` upload-only import — [app/dashboard/availability/import/ics/page.tsx](app/dashboard/availability/import/ics/page.tsx), [lib/ics.ts](lib/ics.ts) *(on `feat/apple-ics-fallback`)*
+- Google OAuth tokens stored in Supabase Vault, not plaintext — [supabase/migrations/](supabase/migrations/) *(on `feat/vault-oauth-tokens`)*
+- Last-admin guard trigger — can't demote or remove the sole admin of a band *(on `fix/last-admin-guard`)*
 
-Still stubs:
-- [ ] Create-band form → `create_band` RPC — [app/dashboard/bands/new/page.tsx](app/dashboard/bands/new/page.tsx)
-- [ ] Band settings (bio, links, genres) + uploads + roster/invites — [app/dashboard/bands/[bandId]/page.tsx](app/dashboard/bands/[bandId]/page.tsx)
-- [ ] Band calendar + `sync_band_open_dates` + flip to `penciled_in` / `booked` — [app/dashboard/bands/[bandId]/availability/page.tsx](app/dashboard/bands/[bandId]/availability/page.tsx)
-- [ ] EPK visual design pass
-- [ ] `band_invites` table + accept flow for non-user bandmates
-- [ ] Apple Calendar ICS fallback (no OAuth equivalent exists)
-- [ ] Encrypt stored Google tokens with pgsodium / Supabase Vault
+Still open:
+- [ ] EPK visual design pass (hero, sections, visual hierarchy)
+- [ ] Phase 2 Bill Builder — 3-4 act matchmaking + draft lineup pitch package
+- [ ] Phase 2 photographer / creative directory
+- [ ] Phase 2 double-blind 3-way rating system
 
 ## Setup
 
@@ -133,7 +137,7 @@ Already-applied migrations are no-ops, so the workflow is safe to re-run (or tri
 
 ## Known follow-ups
 
-- **Email invites:** `band_members` needs an existing profile. Inviting non-users needs a `band_invites` table (email, band_id, token) and an accept flow — next migration.
-- **Unavailability reasons** are visible to bandmates. Keep them non-sensitive or split them into an owner-only table.
-- **Last-admin guard:** nothing yet stops the only admin from leaving or demoting themselves.
+- **Unavailability reasons** are owner-only now (private per migration 4). Keep that in mind if you add new query paths.
 - `user_role` enum exists but no column uses it yet (likely `profiles.primary_role` once venues/creatives onboard).
+- **TZ drift between Google (server-UTC) and ICS (browser-local)** — the same conceptual timed event imported both ways can land on different `YYYY-MM-DD` strings. Standardize before shipping both widely.
+- **EPK design pass** — the public page is functional but visually unpolished.
