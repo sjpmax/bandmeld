@@ -3,17 +3,11 @@ import { z } from "zod";
 // The full set of icon kinds. Order matters for display in the gear tray.
 export const ICON_KINDS = [
   "drum_kit",
-  "bass_cab",
-  "bass_guitar",
-  "guitar_cab",
   "guitar",
+  "bass_guitar",
+  "amp",
   "keys",
-  "vocal_mic",
-  "instrument_mic",
-  "monitor_wedge",
-  "di_box",
-  "power",
-  "riser",
+  "mic",
   "person",
   "label",
 ] as const;
@@ -24,36 +18,24 @@ export type IconKind = (typeof ICON_KINDS)[number];
 // come from the roster section and the Guest/Label slots respectively).
 export const GEAR_KINDS: IconKind[] = [
   "drum_kit",
-  "bass_cab",
-  "bass_guitar",
-  "guitar_cab",
   "guitar",
+  "bass_guitar",
+  "amp",
   "keys",
-  "vocal_mic",
-  "instrument_mic",
-  "monitor_wedge",
-  "di_box",
-  "power",
-  "riser",
+  "mic",
 ];
 
 // Kinds that trigger the "Add to input list?" nudge when dropped.
-export const INPUT_LIKE_KINDS: IconKind[] = ["vocal_mic", "instrument_mic", "di_box"];
+export const INPUT_LIKE_KINDS: IconKind[] = ["mic"];
 
 // Human labels used in trays and nudges.
 export const KIND_LABELS: Record<IconKind, string> = {
-  drum_kit: "Drum kit",
-  bass_cab: "Bass cab",
-  bass_guitar: "Bass guitar",
-  guitar_cab: "Guitar cab",
+  drum_kit: "Drums",
   guitar: "Guitar",
+  bass_guitar: "Bass",
+  amp: "Amp",
   keys: "Keys",
-  vocal_mic: "Vocal mic",
-  instrument_mic: "Instrument mic",
-  monitor_wedge: "Monitor wedge",
-  di_box: "DI box",
-  power: "Power",
-  riser: "Riser",
+  mic: "Mic",
   person: "Person",
   label: "Label",
 };
@@ -93,14 +75,60 @@ export const EMPTY_STAGE_PLOT: StagePlot = {
 };
 
 /**
+ * Maps legacy icon kinds (pre-simplification) onto the current set.
+ * A `null` value means the item should be dropped entirely — those kinds
+ * (DI box, monitor wedge, power, riser, dedicated instrument mic) are now
+ * considered venue-provided and don't belong on the band's own plot.
+ */
+const LEGACY_KIND_MIGRATION: Record<string, IconKind | null> = {
+  bass_cab: "amp",
+  guitar_cab: "amp",
+  vocal_mic: "mic",
+  instrument_mic: "mic",
+  monitor_wedge: null,
+  di_box: null,
+  power: null,
+  riser: null,
+};
+
+/** Rewrites a raw stage_plot blob so legacy item kinds survive Zod parsing. */
+function migrateLegacyKinds(raw: unknown): unknown {
+  if (!raw || typeof raw !== "object") return raw;
+  const obj = raw as { items?: unknown };
+  if (!Array.isArray(obj.items)) return raw;
+
+  const items: unknown[] = [];
+  for (const item of obj.items) {
+    if (!item || typeof item !== "object") {
+      items.push(item);
+      continue;
+    }
+    const kind = (item as { kind?: unknown }).kind;
+    if (typeof kind !== "string") {
+      items.push(item);
+      continue;
+    }
+    if (kind in LEGACY_KIND_MIGRATION) {
+      const next = LEGACY_KIND_MIGRATION[kind];
+      if (next === null) continue; // drop
+      items.push({ ...item, kind: next });
+    } else {
+      items.push(item);
+    }
+  }
+  return { ...obj, items };
+}
+
+/**
  * Parse an unknown value (e.g. `bands.stage_plot` which is `Json | null`) into
  * a valid StagePlot, or return EMPTY_STAGE_PLOT if the value is null/malformed.
  * The editor and all renderers use this so a corrupt or legacy blob never
- * crashes the page.
+ * crashes the page. Legacy icon kinds are migrated before validation.
  */
 export function parseStagePlot(raw: unknown): StagePlot {
   if (raw == null) return EMPTY_STAGE_PLOT;
-  const result = stagePlotSchema.safeParse(raw);
+  const migrated = migrateLegacyKinds(raw);
+  const result = stagePlotSchema.safeParse(migrated);
   return result.success ? result.data : EMPTY_STAGE_PLOT;
 }
 
