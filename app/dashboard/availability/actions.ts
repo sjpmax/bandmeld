@@ -115,16 +115,39 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
     .filter((e) => selectedIds.has(e.id))
     .map((e) => ({
       profile_id: profileId,
-      start_date: e.startDate,
-      end_date: e.endDate,
-      reason: e.summary.slice(0, 120),
+      start_date: String(e.startDate ?? ""),
+      end_date: String(e.endDate ?? ""),
+      reason: String(e.summary ?? "").slice(0, 120),
     }));
 
   if (rows.length === 0) {
     redirect("/dashboard/availability?import_error=nothing_selected");
   }
 
-  const { error } = await supabase.from("member_unavailabilities").insert(rows);
+  // Dedupe against rows this user already has at the same date range + reason.
+  // Fixes #9: re-importing a calendar duplicated every event. Query by the
+  // candidate start_dates to keep the comparison small on busy calendars.
+  const candidateStarts = Array.from(new Set(rows.map((r) => r.start_date)));
+  const { data: existingRows } = await supabase
+    .from("member_unavailabilities")
+    .select("start_date, end_date, reason")
+    .eq("profile_id", profileId)
+    .in("start_date", candidateStarts);
+  const existingKeys = new Set(
+    (existingRows ?? []).map((r) => `${r.start_date}|${r.end_date}|${r.reason ?? ""}`),
+  );
+  const freshRows = rows.filter(
+    (r) => !existingKeys.has(`${r.start_date}|${r.end_date}|${r.reason ?? ""}`),
+  );
+  const skippedCount = rows.length - freshRows.length;
+
+  if (freshRows.length === 0) {
+    redirect(
+      `/dashboard/availability?import_error=all_duplicates&skipped=${skippedCount}`,
+    );
+  }
+
+  const { error } = await supabase.from("member_unavailabilities").insert(freshRows);
   if (error) {
     redirect(`/dashboard/availability?import_error=${encodeURIComponent(error.message)}`);
   }
@@ -135,5 +158,7 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
     .eq("profile_id", profileId);
 
   revalidatePath("/dashboard/availability");
-  redirect(`/dashboard/availability?imported=${rows.length}`);
+  const params = new URLSearchParams({ imported: String(freshRows.length) });
+  if (skippedCount > 0) params.set("skipped", String(skippedCount));
+  redirect(`/dashboard/availability?${params.toString()}`);
 }
