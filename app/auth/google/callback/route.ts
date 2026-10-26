@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { createClient } from "@/utils/supabase/server";
 import { GOOGLE_CALENDAR_SCOPE } from "@/lib/google-calendar";
+import { loadGoogleTokens, storeGoogleTokens } from "@/lib/google-tokens";
 
 /**
  * OAuth landing route for linking Google Calendar.
@@ -49,12 +50,13 @@ export async function GET(request: NextRequest) {
   // Preserve the one we already have in that case.
   let effectiveRefreshToken = providerRefreshToken;
   if (!effectiveRefreshToken) {
-    const { data: existing } = await supabase
-      .from("google_calendar_connections")
-      .select("refresh_token")
-      .eq("profile_id", data.user.id)
-      .maybeSingle();
-    effectiveRefreshToken = existing?.refresh_token ?? null;
+    try {
+      const existing = await loadGoogleTokens(supabase);
+      effectiveRefreshToken = existing?.refresh_token ?? null;
+    } catch {
+      // No existing secret — fine, this is a first-time connect.
+      effectiveRefreshToken = null;
+    }
   }
 
   // Supabase doesn't expose the provider token's exact expiry; Google access
@@ -62,18 +64,27 @@ export async function GET(request: NextRequest) {
   // against the real `expires_in` on first refresh.
   const expiresAt = new Date(Date.now() + 55 * 60 * 1000).toISOString();
 
+  // 1. Upsert non-secret metadata.
   const { error: upsertErr } = await supabase.from("google_calendar_connections").upsert(
     {
       profile_id: data.user.id,
       google_sub: googleSub,
-      access_token: providerToken,
-      refresh_token: effectiveRefreshToken,
       expires_at: expiresAt,
       scope: GOOGLE_CALENDAR_SCOPE,
     },
     { onConflict: "profile_id" },
   );
   if (upsertErr) return fail(origin, upsertErr.message);
+
+  // 2. Store secret tokens in the Vault.
+  try {
+    await storeGoogleTokens(supabase, {
+      access_token: providerToken,
+      refresh_token: effectiveRefreshToken,
+    });
+  } catch (err) {
+    return fail(origin, err instanceof Error ? err.message : "token_store_failed");
+  }
 
   return NextResponse.redirect(new URL(next, origin));
 }

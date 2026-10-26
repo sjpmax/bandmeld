@@ -15,7 +15,12 @@ export const GOOGLE_CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar.e
 const TOKEN_ENDPOINT = "https://oauth2.googleapis.com/token";
 const EVENTS_ENDPOINT = "https://www.googleapis.com/calendar/v3/calendars/primary/events";
 
+/** The non-secret metadata row. Tokens live in the Vault now; see
+ *  loadGoogleTokens / storeGoogleTokens / clearGoogleTokens below. */
 export type GoogleConnection = Tables<"google_calendar_connections">;
+
+/** The decrypted token pair for a user — read via the get_google_tokens RPC. */
+export type GoogleTokens = { access_token: string; refresh_token: string | null };
 
 /** Minimal subset of Google's Event resource we actually read. */
 type GoogleEventTime = { dateTime?: string; date?: string; timeZone?: string };
@@ -60,26 +65,30 @@ async function refreshAccessToken(refreshToken: string): Promise<RefreshResponse
 }
 
 /**
- * Returns a usable access token for this connection, refreshing on-demand.
- * Writes the refreshed token + expiry back via the supplied `onRefresh`
- * callback so the caller can persist it.
+ * Returns a usable access token, refreshing on-demand.
+ *
+ * Takes the Vault-decrypted token pair (from `loadGoogleTokens`) plus the
+ * expiry timestamp (from `google_calendar_connections.expires_at`), and an
+ * `onRefresh` callback the caller uses to persist the new access_token +
+ * expires_at. The refresh_token is not re-issued by Google on refresh, so
+ * the callback only needs to deal with those two fields.
  */
 export async function getValidAccessToken(
-  connection: GoogleConnection,
+  current: { access_token: string; refresh_token: string | null; expires_at: string },
   onRefresh: (next: { access_token: string; expires_at: string }) => Promise<void>,
 ): Promise<string> {
   const now = Date.now();
-  const expiresAtMs = new Date(connection.expires_at).getTime();
+  const expiresAtMs = new Date(current.expires_at).getTime();
   // 60s skew buffer
-  if (expiresAtMs - now > 60_000) return connection.access_token;
+  if (expiresAtMs - now > 60_000) return current.access_token;
 
-  if (!connection.refresh_token) {
+  if (!current.refresh_token) {
     throw new Error(
       "Google refresh token missing. Disconnect and reconnect Google Calendar.",
     );
   }
 
-  const refreshed = await refreshAccessToken(connection.refresh_token);
+  const refreshed = await refreshAccessToken(current.refresh_token);
   const nextExpiresAt = new Date(Date.now() + refreshed.expires_in * 1000).toISOString();
   await onRefresh({ access_token: refreshed.access_token, expires_at: nextExpiresAt });
   return refreshed.access_token;
