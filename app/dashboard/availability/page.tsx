@@ -126,6 +126,24 @@ export default async function MyAvailabilityPage({
         </div>
       </section>
 
+      <section className="flex flex-col gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-lg font-semibold">Apple Calendar / .ics file</h2>
+            <p className="text-sm opacity-70">
+              Export from Apple Calendar (or any app that produces .ics) and upload it
+              to pre-fill your blocks. Nothing leaves your browser until you confirm.
+            </p>
+          </div>
+          <Link
+            href="/dashboard/availability/import/ics"
+            className="rounded-full border border-black/15 bg-white px-4 py-2 text-sm font-medium text-ink hover:bg-black/5 dark:border-white/20 dark:bg-white/5 dark:text-inherit dark:hover:bg-white/10"
+          >
+            Upload .ics
+          </Link>
+        </div>
+      </section>
+
       <UnavailabilityForm />
 
       <section className="flex flex-col gap-3">

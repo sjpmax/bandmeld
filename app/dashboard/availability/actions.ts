@@ -6,6 +6,7 @@ import { createClient } from "@/utils/supabase/server";
 import type { ActionResult } from "@/types";
 import type { ReviewableEvent } from "@/lib/google-calendar";
 import { clearGoogleTokens } from "@/lib/google-tokens";
+import type { ReviewableEvent } from "@/types/calendar-import";
 
 export async function addUnavailability(
   _prev: ActionResult,
@@ -126,9 +127,9 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
     .filter((e) => selectedIds.has(e.id))
     .map((e) => ({
       profile_id: profileId,
-      start_date: e.startDate,
-      end_date: e.endDate,
-      reason: e.summary.slice(0, 120),
+      start_date: String(e.startDate ?? ""),
+      end_date: String(e.endDate ?? ""),
+      reason: String(e.summary ?? "").slice(0, 120),
     }));
 
   if (rows.length === 0) {
@@ -144,6 +145,52 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
     .from("google_calendar_connections")
     .update({ last_synced_at: new Date().toISOString() })
     .eq("profile_id", profileId);
+
+  revalidatePath("/dashboard/availability");
+  redirect(`/dashboard/availability?imported=${rows.length}`);
+}
+
+// ---------------------------------------------------------------------------
+// Apple Calendar / .ics upload import
+// ---------------------------------------------------------------------------
+
+/**
+ * Applies a parsed .ics selection. Identical insert shape to the Google
+ * flow; just doesn't touch any OAuth connection row (there is none).
+ */
+export async function applyIcsImport(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const profileId = claims?.claims?.sub;
+  if (!profileId) redirect("/login?next=/dashboard/availability");
+
+  const payloadRaw = String(formData.get("payload") ?? "");
+  const selectedIds = new Set(formData.getAll("selected").map((v) => String(v)));
+
+  let events: ReviewableEvent[];
+  try {
+    events = JSON.parse(payloadRaw) as ReviewableEvent[];
+  } catch {
+    redirect("/dashboard/availability?import_error=bad_payload");
+  }
+
+  const rows = events
+    .filter((e) => selectedIds.has(e.id))
+    .map((e) => ({
+      profile_id: profileId,
+      start_date: String(e.startDate ?? ""),
+      end_date: String(e.endDate ?? ""),
+      reason: String(e.summary ?? "").slice(0, 120),
+    }));
+
+  if (rows.length === 0) {
+    redirect("/dashboard/availability?import_error=nothing_selected");
+  }
+
+  const { error } = await supabase.from("member_unavailabilities").insert(rows);
+  if (error) {
+    redirect(`/dashboard/availability?import_error=${encodeURIComponent(error.message)}`);
+  }
 
   revalidatePath("/dashboard/availability");
   redirect(`/dashboard/availability?imported=${rows.length}`);

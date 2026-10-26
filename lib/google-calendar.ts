@@ -136,38 +136,8 @@ export async function listCalendarEvents(
 // Event → unavailability shaping
 // -----------------------------------------------------------------------------
 
-export type ReviewableEvent = {
-  /** Google event id (unique within the pulled window). */
-  id: string;
-  summary: string;
-  /** Local-date YYYY-MM-DD (what we'd store in member_unavailabilities). */
-  startDate: string;
-  endDate: string;
-  /** True when start.date / end.date were used (no clock time). */
-  isAllDay: boolean;
-  /** endDate - startDate in days, inclusive (1 = single day). */
-  spanDays: number;
-  /** Grouping key for recurring instances; null for one-offs. */
-  seriesId: string | null;
-  /** Preselect default based on the user's rules. */
-  preselect: boolean;
-};
-
-export type ReviewSeries = {
-  seriesId: string;
-  summary: string;
-  instances: ReviewableEvent[];
-};
-
-export type ReviewPayload = {
-  oneOffs: ReviewableEvent[];
-  recurringSeries: ReviewSeries[];
-  /** Events we would have shown but skipped because the user marked them
-   *  as "free" / "available" in Google Calendar. Offered as a rescue list. */
-  missed: ReviewableEvent[];
-  /** Count of events dropped for other reasons (cancelled, no times, etc). */
-  skippedCount: number;
-};
+import type { ReviewableEvent, ReviewPayload, ReviewSeries } from "@/types/calendar-import";
+export type { ReviewableEvent, ReviewPayload, ReviewSeries };
 
 function pad(n: number) {
   return String(n).padStart(2, "0");

@@ -5,6 +5,8 @@ import { createClient, requireUserId } from "@/utils/supabase/server";
 import { classifyEvents, getValidAccessToken, listCalendarEvents } from "@/lib/google-calendar";
 import { loadGoogleTokens, storeGoogleTokens } from "@/lib/google-tokens";
 import { GoogleImportReview } from "@/components/availability/google-import-review";
+import { ImportReview } from "@/components/availability/import-review";
+import { applyGoogleImport } from "../actions";
 
 export const metadata: Metadata = { title: "Import Google Calendar" };
 export const dynamic = "force-dynamic";
@@ -97,7 +99,7 @@ export default async function GoogleImportPage() {
           Nothing to import — your calendar is clear.
         </p>
       ) : (
-        <GoogleImportReview payload={payload} />
+        <ImportReview payload={payload} applyAction={applyGoogleImport} applyLabel="Import" />
       )}
     </div>
   );
