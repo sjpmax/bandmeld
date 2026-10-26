@@ -1,8 +1,15 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { applyGoogleImport } from "@/app/dashboard/availability/actions";
-import type { ReviewPayload, ReviewableEvent, ReviewSeries } from "@/lib/google-calendar";
+import type { ReviewPayload, ReviewableEvent, ReviewSeries } from "@/types/calendar-import";
+
+type Props = {
+  payload: ReviewPayload;
+  /** Server Action that receives the FormData with payload + selected ids. */
+  applyAction: (formData: FormData) => void | Promise<void>;
+  /** Button label while nothing is selected. */
+  applyLabel?: string;
+};
 
 const dateFmt = new Intl.DateTimeFormat("en-US", {
   weekday: "short",
@@ -16,7 +23,7 @@ function rangeLabel(e: ReviewableEvent) {
   return e.startDate === e.endDate ? fmt(e.startDate) : `${fmt(e.startDate)} → ${fmt(e.endDate)}`;
 }
 
-export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
+export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Props) {
   // Flat list of every event we show, serialized once as the hidden form payload.
   const allEvents: ReviewableEvent[] = useMemo(
     () => [
@@ -70,7 +77,7 @@ export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
   const selectedCount = selected.size;
 
   return (
-    <form action={applyGoogleImport} className="flex flex-col gap-8">
+    <form action={applyAction} className="flex flex-col gap-8">
       <input type="hidden" name="payload" value={payloadJson} />
 
       {/* One-off and multi-day events — on by default */}
@@ -258,7 +265,7 @@ export function GoogleImportReview({ payload }: { payload: ReviewPayload }) {
           disabled={selectedCount === 0}
           className="rounded-full bg-accent px-5 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
-          Import {selectedCount || ""} as unavailability
+          {applyLabel} {selectedCount || ""} as unavailability
         </button>
       </div>
     </form>
