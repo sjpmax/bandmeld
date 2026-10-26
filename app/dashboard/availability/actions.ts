@@ -115,9 +115,9 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
     .filter((e) => selectedIds.has(e.id))
     .map((e) => ({
       profile_id: profileId,
-      start_date: e.startDate,
-      end_date: e.endDate,
-      reason: e.summary.slice(0, 120),
+      start_date: String(e.startDate ?? ""),
+      end_date: String(e.endDate ?? ""),
+      reason: String(e.summary ?? "").slice(0, 120),
     }));
 
   if (rows.length === 0) {
@@ -166,9 +166,9 @@ export async function applyIcsImport(formData: FormData): Promise<void> {
     .filter((e) => selectedIds.has(e.id))
     .map((e) => ({
       profile_id: profileId,
-      start_date: e.startDate,
-      end_date: e.endDate,
-      reason: e.summary.slice(0, 120),
+      start_date: String(e.startDate ?? ""),
+      end_date: String(e.endDate ?? ""),
+      reason: String(e.summary ?? "").slice(0, 120),
     }));
 
   if (rows.length === 0) {

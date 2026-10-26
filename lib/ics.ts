@@ -82,23 +82,57 @@ function normalizeOccurrence(
   };
 }
 
-function expandRecurrence(vevent: ICAL.Event, from: Date, to: Date): NormalizedOccurrence[] {
+function expandRecurrence(
+  vevent: ICAL.Event,
+  from: Date,
+  to: Date,
+  cancelledOverrides: ReadonlySet<string>,
+): NormalizedOccurrence[] {
   const results: NormalizedOccurrence[] = [];
   const iterator = vevent.iterator();
   const fromTime = ICAL.Time.fromJSDate(from, false);
   const toTime = ICAL.Time.fromJSDate(to, false);
-  // Hard cap to avoid runaway iteration on malformed RRULEs.
-  for (let i = 0; i < 1000; i++) {
+  // Count KEPT occurrences against the 1000 cap so ancient DTSTART values
+  // don't silently exhaust the budget before reaching the forward window.
+  // A separate 100k iteration ceiling catches a runaway/malformed RRULE.
+  let kept = 0;
+  for (let i = 0; i < 100_000 && kept < 1000; i++) {
     const next = iterator.next();
     if (!next) break;
     if (next.compare(toTime) > 0) break;
     if (next.compare(fromTime) < 0) continue;
     const details = vevent.getOccurrenceDetails(next);
-    results.push(
-      normalizeOccurrence(vevent, details.startDate, details.endDate, true),
-    );
+    const occ = normalizeOccurrence(vevent, details.startDate, details.endDate, true);
+    // Skip occurrences the ICS file explicitly cancelled via a
+    // RECURRENCE-ID override with STATUS:CANCELLED.
+    if (cancelledOverrides.has(occ.startDate)) continue;
+    results.push(occ);
+    kept++;
   }
   return results;
+}
+
+/** Collects CANCELLED recurrence overrides keyed by UID → set of YYYY-MM-DD
+ *  dates. The main loop uses this to filter out occurrences the author
+ *  explicitly cancelled, which ical.js's isRecurrenceException() hides
+ *  from the master iterator. */
+function collectCancelledOverrides(vevents: ICAL.Component[]): Map<string, Set<string>> {
+  const out = new Map<string, Set<string>>();
+  for (const vcomp of vevents) {
+    const statusVal = vcomp.getFirstPropertyValue("status");
+    const isCancelled =
+      typeof statusVal === "string" && statusVal.toUpperCase() === "CANCELLED";
+    if (!isCancelled) continue;
+    const recId = vcomp.getFirstPropertyValue("recurrence-id");
+    if (!recId || typeof (recId as ICAL.Time).toJSDate !== "function") continue;
+    const uid = vcomp.getFirstPropertyValue("uid");
+    if (typeof uid !== "string") continue;
+    const date = (recId as ICAL.Time).toJSDate();
+    const dateStr = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+    if (!out.has(uid)) out.set(uid, new Set());
+    out.get(uid)!.add(dateStr);
+  }
+  return out;
 }
 
 /**
@@ -114,6 +148,8 @@ export function parseIcsToReviewPayload(text: string): ReviewPayload {
   const now = new Date();
   const horizon = new Date(now.getTime() + 366 * 24 * 60 * 60 * 1000);
 
+  const cancelledOverrides = collectCancelledOverrides(vevents);
+
   let skippedCount = 0;
   const occurrences: NormalizedOccurrence[] = [];
 
@@ -128,7 +164,9 @@ export function parseIcsToReviewPayload(text: string): ReviewPayload {
     if (event.isRecurrenceException()) continue;
 
     if (event.isRecurring()) {
-      const expanded = expandRecurrence(event, now, horizon);
+      const uidKey = typeof event.uid === "string" ? event.uid : "";
+      const cancelledForThis = cancelledOverrides.get(uidKey) ?? new Set<string>();
+      const expanded = expandRecurrence(event, now, horizon, cancelledForThis);
       occurrences.push(...expanded);
     } else {
       const start = event.startDate;
