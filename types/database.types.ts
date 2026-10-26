@@ -261,8 +261,6 @@ export type Database = {
         Row: {
           profile_id: string;
           google_sub: string;
-          access_token: string;
-          refresh_token: string | null;
           expires_at: string;
           scope: string;
           last_synced_at: string | null;
@@ -272,8 +270,6 @@ export type Database = {
         Insert: {
           profile_id: string;
           google_sub: string;
-          access_token: string;
-          refresh_token?: string | null;
           expires_at: string;
           scope: string;
           last_synced_at?: string | null;
@@ -283,8 +279,6 @@ export type Database = {
         Update: {
           profile_id?: string;
           google_sub?: string;
-          access_token?: string;
-          refresh_token?: string | null;
           expires_at?: string;
           scope?: string;
           last_synced_at?: string | null;
@@ -404,6 +398,19 @@ export type Database = {
       };
       set_band_preferred_gig_days: {
         Args: { p_band_id: string; p_preferred_days: number[] };
+        Returns: undefined;
+      };
+      // ---- Added in vault_google_tokens.sql ----
+      set_google_tokens: {
+        Args: { p_access_token: string; p_refresh_token: string };
+        Returns: undefined;
+      };
+      get_google_tokens: {
+        Args: Record<string, never>;
+        Returns: { access_token: string; refresh_token: string | null }[];
+      };
+      delete_google_tokens: {
+        Args: Record<string, never>;
         Returns: undefined;
       };
     };

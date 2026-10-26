@@ -4,6 +4,8 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { ActionResult } from "@/types";
+import type { ReviewableEvent } from "@/lib/google-calendar";
+import { clearGoogleTokens } from "@/lib/google-tokens";
 import type { ReviewableEvent } from "@/types/calendar-import";
 
 export async function addUnavailability(
@@ -72,7 +74,17 @@ export async function disconnectGoogleCalendar(): Promise<void> {
   const profileId = claims?.claims?.sub;
   if (!profileId) return;
 
-  // Delete our stored provider tokens.
+  // Wipe the Vault-stored tokens FIRST. Surface the error if Vault fails:
+  // silently leaving the secret stranded means a later reconnect could
+  // read the old refresh_token and pair it with a new access_token.
+  try {
+    await clearGoogleTokens(supabase);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "vault_clear_failed";
+    redirect(`/dashboard/availability?connect_error=${encodeURIComponent(msg)}`);
+  }
+
+  // Then delete our connection metadata row.
   await supabase.from("google_calendar_connections").delete().eq("profile_id", profileId);
 
   // Also unlink the Google identity itself — otherwise a future Connect

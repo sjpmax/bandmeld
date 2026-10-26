@@ -3,6 +3,8 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { createClient, requireUserId } from "@/utils/supabase/server";
 import { classifyEvents, getValidAccessToken, listCalendarEvents } from "@/lib/google-calendar";
+import { loadGoogleTokens, storeGoogleTokens } from "@/lib/google-tokens";
+import { GoogleImportReview } from "@/components/availability/google-import-review";
 import { ImportReview } from "@/components/availability/import-review";
 import { applyGoogleImport } from "../actions";
 
@@ -21,15 +23,37 @@ export default async function GoogleImportPage() {
   if (connErr) throw connErr;
   if (!connection) redirect("/dashboard/availability?connect_error=not_connected");
 
-  // Refresh if close to expiry; persist the new token.
+  // Load the current Vault-stored tokens.
+  let tokens;
+  try {
+    tokens = await loadGoogleTokens(supabase);
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "token_error";
+    redirect(`/dashboard/availability?connect_error=${encodeURIComponent(msg)}`);
+  }
+  if (!tokens) redirect("/dashboard/availability?connect_error=not_connected");
+
+  // Refresh if close to expiry; persist the new access token in the Vault
+  // and the new expires_at on the row.
   let accessToken: string;
   try {
-    accessToken = await getValidAccessToken(connection, async (next) => {
-      await supabase
-        .from("google_calendar_connections")
-        .update({ access_token: next.access_token, expires_at: next.expires_at })
-        .eq("profile_id", userId);
-    });
+    accessToken = await getValidAccessToken(
+      {
+        access_token: tokens.access_token,
+        refresh_token: tokens.refresh_token,
+        expires_at: connection.expires_at,
+      },
+      async (next) => {
+        await storeGoogleTokens(supabase, {
+          access_token: next.access_token,
+          refresh_token: tokens.refresh_token,
+        });
+        await supabase
+          .from("google_calendar_connections")
+          .update({ expires_at: next.expires_at })
+          .eq("profile_id", userId);
+      },
+    );
   } catch (err) {
     const msg = err instanceof Error ? err.message : "token_error";
     redirect(`/dashboard/availability?connect_error=${encodeURIComponent(msg)}`);
