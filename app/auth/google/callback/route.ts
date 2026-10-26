@@ -47,14 +47,25 @@ export async function GET(request: NextRequest) {
   if (!googleSub) return fail(origin, "no_google_identity");
 
   // If this is a re-link, Google may not re-issue a refresh_token.
-  // Preserve the one we already have in that case.
+  // Preserve the stored one only when the existing row's google_sub matches
+  // this consent's identity — otherwise an orphaned Vault secret from a
+  // previous account would get paired with the new account's access token
+  // and poison every subsequent refresh.
   let effectiveRefreshToken = providerRefreshToken;
   if (!effectiveRefreshToken) {
-    try {
-      const existing = await loadGoogleTokens(supabase);
-      effectiveRefreshToken = existing?.refresh_token ?? null;
-    } catch {
-      // No existing secret — fine, this is a first-time connect.
+    const { data: existingRow } = await supabase
+      .from("google_calendar_connections")
+      .select("google_sub")
+      .eq("profile_id", data.user.id)
+      .maybeSingle();
+    if (existingRow?.google_sub === googleSub) {
+      try {
+        const existing = await loadGoogleTokens(supabase);
+        effectiveRefreshToken = existing?.refresh_token ?? null;
+      } catch {
+        effectiveRefreshToken = null;
+      }
+    } else {
       effectiveRefreshToken = null;
     }
   }
@@ -64,7 +75,18 @@ export async function GET(request: NextRequest) {
   // against the real `expires_in` on first refresh.
   const expiresAt = new Date(Date.now() + 55 * 60 * 1000).toISOString();
 
-  // 1. Upsert non-secret metadata.
+  // 1. Store secret tokens in the Vault FIRST — if this fails, we haven't
+  //    written a metadata row that lies about the connection state.
+  try {
+    await storeGoogleTokens(supabase, {
+      access_token: providerToken,
+      refresh_token: effectiveRefreshToken,
+    });
+  } catch (err) {
+    return fail(origin, err instanceof Error ? err.message : "token_store_failed");
+  }
+
+  // 2. Upsert non-secret metadata.
   const { error: upsertErr } = await supabase.from("google_calendar_connections").upsert(
     {
       profile_id: data.user.id,
@@ -75,16 +97,6 @@ export async function GET(request: NextRequest) {
     { onConflict: "profile_id" },
   );
   if (upsertErr) return fail(origin, upsertErr.message);
-
-  // 2. Store secret tokens in the Vault.
-  try {
-    await storeGoogleTokens(supabase, {
-      access_token: providerToken,
-      refresh_token: effectiveRefreshToken,
-    });
-  } catch (err) {
-    return fail(origin, err instanceof Error ? err.message : "token_store_failed");
-  }
 
   return NextResponse.redirect(new URL(next, origin));
 }

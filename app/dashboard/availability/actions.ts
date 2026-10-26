@@ -73,12 +73,14 @@ export async function disconnectGoogleCalendar(): Promise<void> {
   const profileId = claims?.claims?.sub;
   if (!profileId) return;
 
-  // Wipe the Vault-stored tokens first; swallow errors so a stuck secret
-  // can't block a user from disconnecting.
+  // Wipe the Vault-stored tokens FIRST. Surface the error if Vault fails:
+  // silently leaving the secret stranded means a later reconnect could
+  // read the old refresh_token and pair it with a new access_token.
   try {
     await clearGoogleTokens(supabase);
-  } catch {
-    /* ignore */
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : "vault_clear_failed";
+    redirect(`/dashboard/availability?connect_error=${encodeURIComponent(msg)}`);
   }
 
   // Then delete our connection metadata row.

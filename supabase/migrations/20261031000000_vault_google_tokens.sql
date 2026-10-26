@@ -22,9 +22,15 @@
 -- drop, so the migration is lossless.
 -- =============================================================================
 
+-- 0. Make sure the Supabase Vault extension exists. Hosted Supabase has it
+--    pre-enabled; self-hosted / ephemeral test projects may not, so guard.
+CREATE EXTENSION IF NOT EXISTS supabase_vault;
+
 -- 1. Copy existing plaintext tokens into Vault.
 --    No-op on a fresh database. Safe to re-run — vault.create_secret raises
---    on duplicate names, so we check first and skip.
+--    on duplicate names, so we check first and skip. Rows where access_token
+--    is NULL (shouldn't exist, column was NOT NULL, but defence) are filtered
+--    out so Vault doesn't end up holding a `{"access_token": null}` blob.
 DO $$
 DECLARE
   r RECORD;
@@ -35,6 +41,7 @@ BEGIN
   FOR r IN
     SELECT profile_id, access_token, refresh_token
     FROM public.google_calendar_connections
+    WHERE access_token IS NOT NULL
   LOOP
     v_secret_name := 'google_tokens:' || r.profile_id::text;
     v_payload := jsonb_build_object(
@@ -82,12 +89,24 @@ BEGIN
     'refresh_token', p_refresh_token
   )::text;
 
+  -- Serialize concurrent OAuth callbacks for the same user so the
+  -- SELECT-then-INSERT/UPDATE below is effectively atomic. Transaction-
+  -- scoped lock; auto-released on commit or rollback.
+  PERFORM pg_advisory_xact_lock(hashtext(v_secret_name));
+
   SELECT id INTO v_existing_id FROM vault.secrets WHERE name = v_secret_name;
 
   IF v_existing_id IS NOT NULL THEN
     PERFORM vault.update_secret(v_existing_id, v_payload, v_secret_name, 'Google Calendar OAuth tokens');
   ELSE
-    PERFORM vault.create_secret(v_payload, v_secret_name, 'Google Calendar OAuth tokens');
+    BEGIN
+      PERFORM vault.create_secret(v_payload, v_secret_name, 'Google Calendar OAuth tokens');
+    EXCEPTION WHEN unique_violation THEN
+      -- Lost the race with another transaction that already created the
+      -- secret under this name; update it instead.
+      SELECT id INTO v_existing_id FROM vault.secrets WHERE name = v_secret_name;
+      PERFORM vault.update_secret(v_existing_id, v_payload, v_secret_name, 'Google Calendar OAuth tokens');
+    END;
   END IF;
 END;
 $$;

@@ -407,7 +407,7 @@ export type Database = {
       };
       get_google_tokens: {
         Args: Record<string, never>;
-        Returns: { access_token: string; refresh_token: string }[];
+        Returns: { access_token: string; refresh_token: string | null }[];
       };
       delete_google_tokens: {
         Args: Record<string, never>;
