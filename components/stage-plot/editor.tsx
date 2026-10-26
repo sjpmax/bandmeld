@@ -135,15 +135,19 @@ export function StagePlotEditor({ bandId, roster, initialPlot }: Props) {
   }
 
   function onCanvasPointerUp(e: React.PointerEvent) {
+    // Only treat genuine pointer releases as drops. pointerleave fires with
+    // this handler too, and letting it delete an item mid-drag off the canvas
+    // edge toward the trash loses items on an accidental scrub-out.
+    const isDrop = e.type === "pointerup";
     const coords = canvasCoords(e.clientX, e.clientY);
     if (drag.kind === "canvas") {
-      if (pointerOverTrash(e.clientX, e.clientY)) {
+      if (isDrop && pointerOverTrash(e.clientX, e.clientY)) {
         deleteItem(drag.itemId);
       }
-      justDraggedRef.current = true;
-    } else if (drag.kind === "tray-gear" && coords) {
+      if (isDrop) justDraggedRef.current = true;
+    } else if (drag.kind === "tray-gear" && coords && isDrop) {
       addItem({ id: newId(), kind: drag.iconKind, x: coords.x, y: coords.y });
-    } else if (drag.kind === "tray-roster" && coords) {
+    } else if (drag.kind === "tray-roster" && coords && isDrop) {
       const isGuest = !drag.member.member_id;
       const label = isGuest
         ? "Guest"
