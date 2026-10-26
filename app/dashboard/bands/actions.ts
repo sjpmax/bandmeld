@@ -255,6 +255,15 @@ export async function setMemberRequiredForGigs(
   revalidatePath(`/dashboard/bands/${bandId}/availability`);
 }
 
+/** Postgres SQLSTATE for the last-admin guard trigger (check_violation). */
+const LAST_ADMIN_SQLSTATE = "23514";
+
+function isLastAdminError(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  const code = (err as { code?: unknown }).code;
+  return code === LAST_ADMIN_SQLSTATE;
+}
+
 export async function setMemberAdmin(
   memberId: string,
   bandId: string,
@@ -265,23 +274,36 @@ export async function setMemberAdmin(
     .from("band_members")
     .update({ is_admin: nextAdmin })
     .eq("id", memberId);
-  // Trigger raises if this would strip the last admin — error bubbles up to
-  // the error overlay. Silent success otherwise.
-  if (error) throw error;
+  if (error) {
+    if (isLastAdminError(error)) {
+      redirect(`/dashboard/bands/${bandId}?member_error=last_admin_demote`);
+    }
+    throw error;
+  }
   revalidatePath(`/dashboard/bands/${bandId}`);
 }
 
 export async function removeMember(memberId: string, bandId: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("band_members").delete().eq("id", memberId);
-  if (error) throw error;
+  if (error) {
+    if (isLastAdminError(error)) {
+      redirect(`/dashboard/bands/${bandId}?member_error=last_admin_remove`);
+    }
+    throw error;
+  }
   revalidatePath(`/dashboard/bands/${bandId}`);
 }
 
 export async function leaveBand(memberId: string, bandId: string): Promise<void> {
   const supabase = await createClient();
   const { error } = await supabase.from("band_members").delete().eq("id", memberId);
-  if (error) throw error;
+  if (error) {
+    if (isLastAdminError(error)) {
+      redirect(`/dashboard/bands/${bandId}?member_error=last_admin_leave`);
+    }
+    throw error;
+  }
   revalidatePath("/dashboard");
   redirect("/dashboard");
 }

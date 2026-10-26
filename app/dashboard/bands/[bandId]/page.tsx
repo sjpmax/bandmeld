@@ -13,12 +13,33 @@ import { MemberLineupToggle } from "@/components/bands/member-lineup-toggle";
 
 export const metadata: Metadata = { title: "Band settings" };
 
+type MemberError =
+  | "last_admin_demote"
+  | "last_admin_remove"
+  | "last_admin_leave";
+
+const MEMBER_ERROR_MESSAGE: Record<MemberError, string> = {
+  last_admin_demote:
+    "Can't demote — this is the band's only admin. Promote another member to admin first.",
+  last_admin_remove:
+    "Can't remove — this is the band's only admin. Promote another member before removing.",
+  last_admin_leave:
+    "You're the band's only admin. Promote another member to admin before you leave.",
+};
+
 export default async function BandSettingsPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ bandId: string }>;
+  searchParams: Promise<{ member_error?: string }>;
 }) {
   const { bandId } = await params;
+  const sp = await searchParams;
+  const memberError =
+    sp.member_error && sp.member_error in MEMBER_ERROR_MESSAGE
+      ? (sp.member_error as MemberError)
+      : null;
   const userId = await requireUserId(`/dashboard/bands/${bandId}`);
   const supabase = await createClient();
 
@@ -71,6 +92,12 @@ export default async function BandSettingsPage({
       {!viewerIsAdmin && (
         <p className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
           You&apos;re a member of this band but not an admin. Settings and invites are read-only.
+        </p>
+      )}
+
+      {memberError && (
+        <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm">
+          {MEMBER_ERROR_MESSAGE[memberError]}
         </p>
       )}
 
