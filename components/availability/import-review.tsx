@@ -1,7 +1,20 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import type { ReviewPayload, ReviewableEvent, ReviewSeries } from "@/types/calendar-import";
+
+type ViewMode = "list" | "table";
+const VIEW_STORAGE_KEY = "bandsnap:import-view";
+
+function readStoredView(): ViewMode {
+  if (typeof window === "undefined") return "list";
+  try {
+    const v = window.localStorage.getItem(VIEW_STORAGE_KEY);
+    return v === "table" ? "table" : "list";
+  } catch {
+    return "list";
+  }
+}
 
 type Props = {
   payload: ReviewPayload;
@@ -43,6 +56,16 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
   });
   // Which series panels are expanded.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  // List vs table view, hydrated from localStorage.
+  const [view, setView] = useState<ViewMode>(readStoredView);
+
+  useEffect(() => {
+    try {
+      window.localStorage.setItem(VIEW_STORAGE_KEY, view);
+    } catch {
+      // Private browsing or storage disabled — remember only for this session.
+    }
+  }, [view]);
 
   function toggleEvent(id: string, next: boolean) {
     setSelected((prev) => {
@@ -79,44 +102,69 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
     <form action={applyAction} className="flex flex-col gap-8">
       <input type="hidden" name="payload" value={payloadJson} />
 
+      <div className="flex items-center justify-between gap-3 text-sm">
+        <span className="opacity-70">
+          {payload.missed.length} missed · {payload.oneOffs.length} one-off ·{" "}
+          {payload.recurringSeries.length} series
+        </span>
+        <div
+          role="group"
+          aria-label="View mode"
+          className="inline-flex overflow-hidden rounded-full border border-black/15 dark:border-white/20"
+        >
+          <button
+            type="button"
+            aria-pressed={view === "list"}
+            onClick={() => setView("list")}
+            className={
+              "px-3 py-1 text-xs font-medium " +
+              (view === "list" ? "bg-ink text-paper dark:bg-white dark:text-black" : "opacity-70")
+            }
+          >
+            ≡ List
+          </button>
+          <button
+            type="button"
+            aria-pressed={view === "table"}
+            onClick={() => setView("table")}
+            className={
+              "px-3 py-1 text-xs font-medium " +
+              (view === "table" ? "bg-ink text-paper dark:bg-white dark:text-black" : "opacity-70")
+            }
+          >
+            ▦ Table
+          </button>
+        </div>
+      </div>
+
       {/* Google marked these as free — surfaced first so users can rescue real conflicts
           before they move on. */}
       {payload.missed.length > 0 && (
         <section className="flex flex-col gap-3">
           <div className="rounded-xl border border-dashed border-amber-500/60 bg-amber-500/5 p-3">
-            <p className="font-semibold">Google marked these as free — any you can&apos;t play?</p>
+            <h2 className="text-xl font-semibold">
+              Google marked these as free — any you can&apos;t play?
+            </h2>
             <p className="text-sm opacity-70">
               {payload.missed.length} event{payload.missed.length === 1 ? "" : "s"} came back as &quot;free&quot;
               in your calendar. Tap any that are actually conflicts to add them to your blocks.
             </p>
           </div>
-          <ul className="flex flex-col gap-2">
-            {payload.missed.map((e) => (
-              <li
-                key={e.id}
-                className="flex items-center gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
-              >
-                <input
-                  type="checkbox"
-                  id={`miss-${e.id}`}
-                  name="selected"
-                  value={e.id}
-                  checked={selected.has(e.id)}
-                  onChange={(ev) => toggleEvent(e.id, ev.currentTarget.checked)}
-                  className="h-5 w-5"
-                />
-                <label htmlFor={`miss-${e.id}`} className="flex flex-1 flex-col">
-                  <span className="font-medium">{e.summary}</span>
-                  <span className="text-sm opacity-70">
-                    {rangeLabel(e)}
-                    {e.spanDays >= 2 && (
-                      <> · <span className="font-medium">{e.spanDays} days</span></>
-                    )}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          {view === "table" ? (
+            <EventTableRows
+              events={payload.missed}
+              selected={selected}
+              onToggle={toggleEvent}
+              idPrefix="miss"
+            />
+          ) : (
+            <EventListRows
+              events={payload.missed}
+              selected={selected}
+              onToggle={toggleEvent}
+              idPrefix="miss"
+            />
+          )}
         </section>
       )}
 
@@ -130,35 +178,20 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
           <p className="rounded-xl border border-dashed border-black/20 p-4 text-sm opacity-70 dark:border-white/20">
             No single or multi-day events found.
           </p>
+        ) : view === "table" ? (
+          <EventTableRows
+            events={payload.oneOffs}
+            selected={selected}
+            onToggle={toggleEvent}
+            idPrefix="ev"
+          />
         ) : (
-          <ul className="flex flex-col gap-2">
-            {payload.oneOffs.map((e) => (
-              <li
-                key={e.id}
-                className="flex items-center gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
-              >
-                <input
-                  type="checkbox"
-                  id={`ev-${e.id}`}
-                  name="selected"
-                  value={e.id}
-                  checked={selected.has(e.id)}
-                  onChange={(ev) => toggleEvent(e.id, ev.currentTarget.checked)}
-                  className="h-5 w-5"
-                />
-                <label htmlFor={`ev-${e.id}`} className="flex flex-1 flex-col">
-                  <span className="font-medium">{e.summary}</span>
-                  <span className="text-sm opacity-70">
-                    {rangeLabel(e)}
-                    {e.spanDays >= 2 && (
-                      <> · <span className="font-medium">{e.spanDays} days</span></>
-                    )}
-                    {!e.isAllDay && e.spanDays === 1 && <> · timed</>}
-                  </span>
-                </label>
-              </li>
-            ))}
-          </ul>
+          <EventListRows
+            events={payload.oneOffs}
+            selected={selected}
+            onToggle={toggleEvent}
+            idPrefix="ev"
+          />
         )}
       </section>
 
@@ -211,24 +244,35 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
                     </button>
                   </div>
                   {isOpen && (
-                    <ul className="flex flex-col gap-1 border-t border-black/10 p-3 pl-10 dark:border-white/10">
-                      {s.instances.map((inst) => (
-                        <li key={inst.id} className="flex items-center gap-3">
-                          <input
-                            type="checkbox"
-                            id={`inst-${inst.id}`}
-                            name="selected"
-                            value={inst.id}
-                            checked={selected.has(inst.id)}
-                            onChange={(ev) => toggleEvent(inst.id, ev.currentTarget.checked)}
-                            className="h-4 w-4"
-                          />
-                          <label htmlFor={`inst-${inst.id}`} className="text-sm opacity-80">
-                            {rangeLabel(inst)}
-                          </label>
-                        </li>
-                      ))}
-                    </ul>
+                    <div className="border-t border-black/10 p-3 dark:border-white/10">
+                      {view === "table" ? (
+                        <EventTableRows
+                          events={s.instances}
+                          selected={selected}
+                          onToggle={toggleEvent}
+                          idPrefix={`inst-${s.seriesId}`}
+                        />
+                      ) : (
+                        <ul className="flex flex-col gap-1 pl-7">
+                          {s.instances.map((inst) => (
+                            <li key={inst.id} className="flex items-center gap-3">
+                              <input
+                                type="checkbox"
+                                id={`inst-${inst.id}`}
+                                name="selected"
+                                value={inst.id}
+                                checked={selected.has(inst.id)}
+                                onChange={(ev) => toggleEvent(inst.id, ev.currentTarget.checked)}
+                                className="h-4 w-4"
+                              />
+                              <label htmlFor={`inst-${inst.id}`} className="text-sm opacity-80">
+                                {rangeLabel(inst)}
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   )}
                   {/* Hidden inputs: when series is checked but panel is closed,
                       we still need to submit all instance ids. The checkbox
@@ -260,5 +304,97 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
         </button>
       </div>
     </form>
+  );
+}
+
+type RowsProps = {
+  events: ReviewableEvent[];
+  selected: Set<string>;
+  onToggle: (id: string, next: boolean) => void;
+  /** Prefix for input ids so the three sections never collide. */
+  idPrefix: string;
+};
+
+function EventListRows({ events, selected, onToggle, idPrefix }: RowsProps) {
+  return (
+    <ul className="flex flex-col gap-2">
+      {events.map((e) => (
+        <li
+          key={e.id}
+          className="flex items-center gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
+        >
+          <input
+            type="checkbox"
+            id={`${idPrefix}-${e.id}`}
+            name="selected"
+            value={e.id}
+            checked={selected.has(e.id)}
+            onChange={(ev) => onToggle(e.id, ev.currentTarget.checked)}
+            className="h-5 w-5"
+          />
+          <label htmlFor={`${idPrefix}-${e.id}`} className="flex flex-1 flex-col">
+            <span className="font-medium">{e.summary}</span>
+            <span className="text-sm opacity-70">
+              {rangeLabel(e)}
+              {e.spanDays >= 2 && (
+                <> · <span className="font-medium">{e.spanDays} days</span></>
+              )}
+              {!e.isAllDay && e.spanDays === 1 && <> · timed</>}
+            </span>
+          </label>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
+const dayFmt = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+function dayLabel(iso: string): string {
+  return dayFmt.format(new Date(`${iso}T00:00:00`));
+}
+
+function EventTableRows({ events, selected, onToggle, idPrefix }: RowsProps) {
+  return (
+    <div className="overflow-x-auto rounded-xl border border-black/10 dark:border-white/10">
+      <table className="w-full text-sm">
+        <thead className="bg-black/5 text-left text-xs uppercase tracking-wide dark:bg-white/5">
+          <tr>
+            <th className="w-10 px-3 py-2" scope="col">
+              <span className="sr-only">Pick</span>
+            </th>
+            <th className="px-3 py-2" scope="col">Date</th>
+            <th className="px-3 py-2" scope="col">Day</th>
+            <th className="px-3 py-2" scope="col">Event</th>
+          </tr>
+        </thead>
+        <tbody>
+          {events.map((e) => (
+            <tr key={e.id} className="border-t border-black/5 dark:border-white/10">
+              <td className="px-3 py-2 align-middle">
+                <input
+                  type="checkbox"
+                  id={`${idPrefix}-${e.id}`}
+                  name="selected"
+                  value={e.id}
+                  checked={selected.has(e.id)}
+                  onChange={(ev) => onToggle(e.id, ev.currentTarget.checked)}
+                  className="h-5 w-5"
+                />
+              </td>
+              <td className="px-3 py-2 align-middle">
+                <label htmlFor={`${idPrefix}-${e.id}`}>{rangeLabel(e)}</label>
+              </td>
+              <td className="px-3 py-2 align-middle opacity-70">{dayLabel(e.startDate)}</td>
+              <td className="px-3 py-2 align-middle">
+                {e.summary}
+                {e.spanDays >= 2 && (
+                  <span className="opacity-60"> · {e.spanDays} days</span>
+                )}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
   );
 }
