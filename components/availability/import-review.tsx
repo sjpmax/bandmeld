@@ -57,7 +57,15 @@ export function ImportReview({ payload, applyAction, applyLabel = "Import" }: Pr
   // Which series panels are expanded.
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   // List vs table view, hydrated from localStorage.
-  const [view, setView] = useState<ViewMode>(readStoredView);
+  // SSR and the initial client paint must agree, so we initialize to "list"
+  // unconditionally and read the saved preference on mount. A returning user
+  // whose preference is "table" sees one frame of List before the effect swaps.
+  const [view, setView] = useState<ViewMode>("list");
+
+  useEffect(() => {
+    const stored = readStoredView();
+    if (stored !== "list") setView(stored);
+  }, []);
 
   useEffect(() => {
     try {
