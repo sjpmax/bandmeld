@@ -21,7 +21,7 @@ export default async function ExplorePage() {
   if (error) throw error;
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-4 py-10">
+    <div className="flex flex-col gap-6">
       <header>
         <h1 className="text-3xl font-bold">Explore bands</h1>
         <p className="mt-1 opacity-70">
@@ -75,6 +75,6 @@ export default async function ExplorePage() {
           ))}
         </ul>
       )}
-    </main>
+    </div>
   );
 }
