@@ -33,17 +33,25 @@ The signed-in top nav renders on both `/dashboard/**` and `/explore`. "My bands"
 Extract the header currently inlined in `app/dashboard/layout.tsx` into a new client-safe server component:
 
 - **File:** `components/nav/app-header.tsx`
-- **Props:** `{ authed: boolean; buildTag: string }`
-- **Rendered items when `authed`:** Logo · `Explore` · `My bands` → `/dashboard` · `My availability` → `/dashboard/availability` · `<ThemeToggle />` · `Sign out` (form posts to `signOut`).
+- **Props:** `{ authed: boolean; bandCount: number; buildTag: string }`. `bandCount` is ignored when `authed` is false.
+- **Rendered items when `authed`:** Logo · `Explore` · `My band` / `My bands` → `/dashboard` · `My availability` → `/dashboard/availability` · `<ThemeToggle />` · `Sign out` (form posts to `signOut`). The "My band(s)" label is singular when `bandCount === 1` and plural otherwise (including `0`, which reads naturally as "My bands" leading to the dashboard where the empty state prompts creating one).
 - **Rendered items when not `authed`:** Logo · `Explore` · `<ThemeToggle />` · `Log in` → `/login`.
 - Keep the sticky positioning, max-width container, and backdrop blur from the current dashboard layout.
 
 Then:
 
-- **`app/dashboard/layout.tsx`** replaces its inline `<header>` with `<AppHeader authed buildTag={buildTag()} />`. `requireUserId` call stays; dashboard pages still auth-gate.
+- **`app/dashboard/layout.tsx`** replaces its inline `<header>` with `<AppHeader authed bandCount={bandCount} buildTag={buildTag()} />`. `requireUserId` call stays; dashboard pages still auth-gate. Alongside the existing user check it issues one count query:
+  ```ts
+  const { count } = await supabase
+    .from("band_members")
+    .select("band_id", { count: "exact", head: true })
+    .eq("profile_id", userId);
+  const bandCount = count ?? 0;
+  ```
 - **New file `app/explore/layout.tsx`** (server component):
   - Calls `createClient().auth.getClaims()` to learn whether the viewer is signed in (does NOT redirect — Explore is public).
-  - Renders `<AppHeader authed={!!claims?.claims?.sub} buildTag={buildTag()} />` and wraps `{children}` in a `<main>` matching the dashboard layout's structure.
+  - When signed in, runs the same `band_members` count query as the dashboard layout. When signed out, passes `bandCount: 0` (ignored by the header).
+  - Renders `<AppHeader authed={!!userId} bandCount={bandCount} buildTag={buildTag()} />` and wraps `{children}` in a `<main>` matching the dashboard layout's structure.
   - `buildTag()` is lifted to a small helper (`lib/build-tag.ts`) so the two layouts share one implementation.
 - **`app/explore/page.tsx`** drops its own outer `<main className="mx-auto …">` (the layout now owns the shell) and renders only its header + grid as children.
 
@@ -55,7 +63,8 @@ Then:
 
 ### Testing
 
-- Hit `/explore` signed-in → nav visible with "My bands" link that goes to `/dashboard`.
+- Hit `/explore` signed-in → nav visible with the "My band(s)" link that goes to `/dashboard`.
+- With exactly one band membership, the link reads "My band" (singular). With zero or two-plus, it reads "My bands".
 - Hit `/explore` signed-out → nav visible with "Log in" link; no "Sign out" button.
 - Hit `/dashboard` → unchanged visually.
 - Hit `/bands/<any-slug>` as a signed-in user → still no nav (anonymous-equivalent experience preserved).
