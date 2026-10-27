@@ -66,6 +66,8 @@ export type Database = {
           epk_pdf_url: string | null;
           instagram_url: string | null;
           linktree_url: string | null;
+          website_url: string | null;
+          sound_description: string | null;
           home_city_lat: number | null;
           home_city_lng: number | null;
           avg_local_draw: number | null;
@@ -91,6 +93,8 @@ export type Database = {
           epk_pdf_url?: string | null;
           instagram_url?: string | null;
           linktree_url?: string | null;
+          website_url?: string | null;
+          sound_description?: string | null;
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
@@ -116,6 +120,8 @@ export type Database = {
           epk_pdf_url?: string | null;
           instagram_url?: string | null;
           linktree_url?: string | null;
+          website_url?: string | null;
+          sound_description?: string | null;
           home_city_lat?: number | null;
           home_city_lng?: number | null;
           avg_local_draw?: number | null;
