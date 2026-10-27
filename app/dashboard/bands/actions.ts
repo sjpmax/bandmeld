@@ -85,6 +85,8 @@ export async function updateBand(
   const appleMusicUrl = String(formData.get("apple_music_url") ?? "").trim() || null;
   const instagramUrl = String(formData.get("instagram_url") ?? "").trim() || null;
   const linktreeUrl = String(formData.get("linktree_url") ?? "").trim() || null;
+  const websiteUrl = String(formData.get("website_url") ?? "").trim() || null;
+  const soundDescription = String(formData.get("sound_description") ?? "").trim() || null;
   const genresRaw = String(formData.get("genres") ?? "").trim();
   const avgDrawRaw = String(formData.get("avg_local_draw") ?? "").trim();
 
@@ -124,6 +126,8 @@ export async function updateBand(
       apple_music_url: appleMusicUrl,
       instagram_url: instagramUrl,
       linktree_url: linktreeUrl,
+      website_url: websiteUrl,
+      sound_description: soundDescription,
       avg_local_draw: avgLocalDraw,
     })
     .eq("id", bandId);
