@@ -21,6 +21,20 @@ export function BandSettingsForm({ band }: { band: Band }) {
 
   return (
     <form action={formAction} className="flex flex-col gap-4">
+      <details className="rounded-xl border border-dashed border-black/15 bg-black/5 p-3 text-sm dark:border-white/20 dark:bg-white/5">
+        <summary className="cursor-pointer font-semibold">Writing tips for your EPK</summary>
+        <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 opacity-80">
+          <li>
+            Lead with the <em>feel</em>. &quot;Dirty garage rock&quot; beats &quot;we play rock
+            music.&quot;
+          </li>
+          <li>Name two or three touchstones (&quot;…for fans of X and Y&quot;).</li>
+          <li>What&apos;s the live show like — loud, intimate, dancey, spectacle?</li>
+          <li>Who&apos;s in the band and what instruments?</li>
+          <li>One memorable line a booker could paste into a flyer.</li>
+        </ul>
+      </details>
+
       <label className="flex flex-col gap-1.5 text-sm font-medium">
         Band name
         <input name="name" required maxLength={80} defaultValue={band.name} className={input} />
@@ -58,6 +72,18 @@ export function BandSettingsForm({ band }: { band: Band }) {
           maxLength={1200}
           defaultValue={band.bio ?? ""}
           className={input + " min-h-[6rem] resize-y"}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1.5 text-sm font-medium">
+        Sound
+        <textarea
+          name="sound_description"
+          rows={6}
+          maxLength={2000}
+          defaultValue={band.sound_description ?? ""}
+          placeholder="What does your band sound like? A few sentences or paragraphs — see the tips above."
+          className={input + " min-h-[9rem] resize-y"}
         />
       </label>
 
@@ -103,7 +129,18 @@ export function BandSettingsForm({ band }: { band: Band }) {
 
       <fieldset className="flex flex-col gap-3">
         <legend className="text-sm font-medium">Social</legend>
-        <div className="grid gap-4 sm:grid-cols-2">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <label className="flex flex-col gap-1.5 text-sm font-medium">
+            Website
+            <input
+              name="website_url"
+              type="url"
+              maxLength={300}
+              defaultValue={band.website_url ?? ""}
+              placeholder="https://yourband.com"
+              className={input}
+            />
+          </label>
           <label className="flex flex-col gap-1.5 text-sm font-medium">
             Instagram
             <input
