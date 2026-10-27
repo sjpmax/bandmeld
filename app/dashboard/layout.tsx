@@ -2,13 +2,8 @@ import Link from "next/link";
 import { signOut } from "@/app/(auth)/actions";
 import { Logo } from "@/components/logo";
 import { ThemeToggle } from "@/components/theme-toggle";
+import { buildTag } from "@/lib/build-tag";
 import { requireUserId } from "@/utils/supabase/server";
-
-function buildTag(): string {
-  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
-  if (sha) return sha.slice(0, 7);
-  return "dev";
-}
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   // proxy.ts already redirects guests; this is defence-in-depth for
