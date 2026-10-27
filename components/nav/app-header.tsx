@@ -12,8 +12,6 @@ type Props = {
    * `authed` is false.
    */
   bandCount: number;
-  /** Short build SHA shown in the footer. */
-  buildTag: string;
 };
 
 /**

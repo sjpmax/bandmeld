@@ -19,7 +19,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="flex min-h-dvh flex-col">
-      <AppHeader authed bandCount={bandCount} buildTag={tag} />
+      <AppHeader authed bandCount={bandCount} />
       <main className="mx-auto w-full max-w-5xl grow px-4 py-8">{children}</main>
       <footer className="mx-auto w-full max-w-5xl px-4 py-3 text-right text-[10px] font-mono opacity-40">
         build {tag}
