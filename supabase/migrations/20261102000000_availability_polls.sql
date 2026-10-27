@@ -319,3 +319,65 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.submit_poll_response(TEXT, JSONB) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION public.submit_poll_response(TEXT, JSONB) TO anon, authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 8. close_poll — admin ends a poll early.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.close_poll(p_poll_id UUID)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_band_id UUID;
+BEGIN
+  SELECT band_id INTO v_band_id FROM public.polls WHERE id = p_poll_id;
+  IF v_band_id IS NULL THEN
+    RAISE EXCEPTION 'Poll not found' USING ERRCODE = '22023';
+  END IF;
+  IF NOT public.is_band_admin(v_band_id) THEN
+    RAISE EXCEPTION 'Only band admins can close polls' USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE public.polls SET closed_at = NOW() WHERE id = p_poll_id AND closed_at IS NULL;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.close_poll(UUID) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.close_poll(UUID) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 9. mark_poll_invite_email — stamp email_sent_at / email_error after send.
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.mark_poll_invite_email(
+  p_invite_id UUID,
+  p_ok        BOOLEAN,
+  p_error     TEXT DEFAULT NULL
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_band_id UUID;
+BEGIN
+  SELECT p.band_id INTO v_band_id
+    FROM public.poll_invites pi
+    JOIN public.polls p ON p.id = pi.poll_id
+   WHERE pi.id = p_invite_id;
+  IF v_band_id IS NULL THEN RETURN; END IF;
+  IF NOT public.is_band_admin(v_band_id) THEN
+    RAISE EXCEPTION 'Only band admins can mark invite email status' USING ERRCODE = '42501';
+  END IF;
+
+  UPDATE public.poll_invites
+     SET email_sent_at = CASE WHEN p_ok THEN NOW() ELSE email_sent_at END,
+         email_error   = CASE WHEN p_ok THEN NULL  ELSE p_error      END
+   WHERE id = p_invite_id;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.mark_poll_invite_email(UUID, BOOLEAN, TEXT) FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION public.mark_poll_invite_email(UUID, BOOLEAN, TEXT) TO authenticated;
