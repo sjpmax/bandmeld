@@ -70,6 +70,15 @@ export default async function BandEpkPage({ params }: Props) {
 
       {band.bio && <p className="whitespace-pre-line text-lg leading-relaxed">{band.bio}</p>}
 
+      {band.sound_description && (
+        <section className="flex flex-col gap-2">
+          <h2 className="text-xl font-semibold tracking-tight">Sound</h2>
+          <p className="whitespace-pre-line text-base leading-relaxed opacity-90">
+            {band.sound_description}
+          </p>
+        </section>
+      )}
+
       {(spotify || appleMusic || youtube) && (
         <section className="flex flex-col gap-4">
           {spotify && (
@@ -109,12 +118,23 @@ export default async function BandEpkPage({ params }: Props) {
 
       <EpkOpenDates openDates={band.open_dates ?? []} bandName={band.name} />
 
-      {(band.spotify_url ||
+      {(band.website_url ||
+        band.spotify_url ||
         band.apple_music_url ||
         band.youtube_url ||
         band.instagram_url ||
         band.linktree_url) && (
         <section className="flex flex-wrap gap-2">
+          {band.website_url && (
+            <a
+              href={band.website_url}
+              target="_blank"
+              rel="noopener"
+              className="rounded-full border border-current/30 px-3 py-1 text-sm hover:border-current"
+            >
+              Website ↗
+            </a>
+          )}
           {band.spotify_url && (
             <a
               href={band.spotify_url}
