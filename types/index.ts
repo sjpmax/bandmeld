@@ -23,7 +23,6 @@ export type BandOpenDateUpdate = TablesUpdate<"band_open_dates">;
 
 // Enums
 export type GigStatus = Enums<"gig_status">;
-export type UserRole = Enums<"user_role">;
 
 // Composite shapes used by pages
 export type BandMemberWithProfile = BandMember & {

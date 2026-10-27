@@ -41,9 +41,9 @@ export async function createPollAction(args: CreatePollArgs): Promise<CreatePoll
   const { data, error } = await supabase.rpc("create_poll", {
     p_band_id: args.bandId,
     p_dates: args.dates,
-    p_title: args.title,
-    p_note: args.note,
-    p_closes_at: null,
+    p_title: args.title ?? undefined,
+    p_note: args.note ?? undefined,
+    p_closes_at: undefined,
   });
 
   if (error) return { ok: false, error: error.message };
@@ -107,7 +107,7 @@ export async function createPollAction(args: CreatePollArgs): Promise<CreatePoll
     await supabase.rpc("mark_poll_invite_email", {
       p_invite_id: inviteId,
       p_ok: result.ok,
-      p_error: result.ok ? null : `${result.status}: ${result.error}`.slice(0, 500),
+      p_error: result.ok ? undefined : `${result.status}: ${result.error}`.slice(0, 500),
     });
 
     if (result.ok) sent++;
