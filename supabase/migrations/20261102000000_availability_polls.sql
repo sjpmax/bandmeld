@@ -165,8 +165,10 @@ BEGIN
    WHERE bm.band_id = p_band_id;
 
   -- Hand back everything the server action needs to send email.
+  -- Cast u.email::TEXT because auth.users.email is varchar(255) and the
+  -- RETURN TABLE declares email TEXT; PL/pgSQL RETURN QUERY is strict.
   RETURN QUERY
-    SELECT v_poll_id, pi.profile_id, pr.full_name, u.email, pi.token
+    SELECT v_poll_id, pi.profile_id, pr.full_name, u.email::TEXT, pi.token
       FROM public.poll_invites pi
       JOIN public.profiles pr ON pr.id = pi.profile_id
       JOIN auth.users    u  ON u.id  = pi.profile_id
