@@ -36,3 +36,19 @@ export function getGoogleOAuthEnv() {
 
   return { clientId, clientSecret };
 }
+
+/**
+ * Resend API credentials for transactional email (poll invitations).
+ */
+export function getResendEnv() {
+  const apiKey = process.env.RESEND_API_KEY;
+  const from = process.env.EMAIL_FROM;
+
+  if (!apiKey || !from) {
+    throw new Error(
+      "Missing Resend env vars. Set RESEND_API_KEY and EMAIL_FROM in .env.local (see .env.example).",
+    );
+  }
+
+  return { apiKey, from };
+}
