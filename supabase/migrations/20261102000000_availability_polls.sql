@@ -179,3 +179,143 @@ $$;
 
 REVOKE EXECUTE ON FUNCTION public.create_poll(UUID, DATE[], TEXT, TEXT, TIMESTAMPTZ) FROM PUBLIC, anon;
 GRANT  EXECUTE ON FUNCTION public.create_poll(UUID, DATE[], TEXT, TEXT, TIMESTAMPTZ) TO authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 6. preview_poll_by_token — public read for the response page
+--    Returns status ('ok' | 'not_found' | 'closed'), poll + dates +
+--    member name + any existing answers (so the UI pre-fills).
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.preview_poll_by_token(p_token TEXT)
+RETURNS TABLE (
+  status         TEXT,
+  poll_id        UUID,
+  band_name      TEXT,
+  title          TEXT,
+  note           TEXT,
+  closes_at      TIMESTAMPTZ,
+  closed_at      TIMESTAMPTZ,
+  member_name    TEXT,
+  dates          JSONB,          -- [{id, target_date, position}, ...] ordered by position
+  answers        JSONB           -- {poll_date_id: boolean, ...}
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_invite  public.poll_invites%ROWTYPE;
+  v_poll    public.polls%ROWTYPE;
+  v_band    public.bands%ROWTYPE;
+  v_name    TEXT;
+  v_dates   JSONB;
+  v_answers JSONB;
+BEGIN
+  SELECT * INTO v_invite FROM public.poll_invites WHERE token = p_token;
+  IF NOT FOUND THEN
+    RETURN QUERY SELECT 'not_found'::TEXT, NULL::UUID, NULL::TEXT, NULL::TEXT, NULL::TEXT,
+                        NULL::TIMESTAMPTZ, NULL::TIMESTAMPTZ, NULL::TEXT, NULL::JSONB, NULL::JSONB;
+    RETURN;
+  END IF;
+
+  SELECT * INTO v_poll FROM public.polls WHERE id = v_invite.poll_id;
+  SELECT * INTO v_band FROM public.bands WHERE id = v_poll.band_id;
+  SELECT full_name INTO v_name FROM public.profiles WHERE id = v_invite.profile_id;
+
+  SELECT COALESCE(
+    jsonb_agg(jsonb_build_object('id', pd.id, 'target_date', pd.target_date, 'position', pd.position)
+              ORDER BY pd.position, pd.target_date),
+    '[]'::jsonb)
+    INTO v_dates
+    FROM public.poll_dates pd
+   WHERE pd.poll_id = v_poll.id;
+
+  SELECT COALESCE(
+    jsonb_object_agg(pr.poll_date_id::text, pr.answer),
+    '{}'::jsonb)
+    INTO v_answers
+    FROM public.poll_responses pr
+   WHERE pr.poll_invite_id = v_invite.id;
+
+  -- Non-fatal: stamp last_viewed_at. (SECURITY DEFINER, so RLS doesn't block.)
+  UPDATE public.poll_invites SET last_viewed_at = NOW() WHERE id = v_invite.id;
+
+  RETURN QUERY SELECT
+    CASE
+      WHEN v_poll.closed_at IS NOT NULL THEN 'closed'
+      WHEN v_poll.closes_at < NOW()     THEN 'closed'
+      ELSE 'ok'
+    END::TEXT,
+    v_poll.id,
+    v_band.name::TEXT,
+    v_poll.title::TEXT,
+    v_poll.note::TEXT,
+    v_poll.closes_at,
+    v_poll.closed_at,
+    v_name,
+    v_dates,
+    v_answers;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.preview_poll_by_token(TEXT) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.preview_poll_by_token(TEXT) TO anon, authenticated;
+
+-- -----------------------------------------------------------------------------
+-- 7. submit_poll_response — public write via token. Upserts answers.
+--    p_answers is JSON: [{"poll_date_id": "<uuid>", "answer": true}, ...]
+-- -----------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.submit_poll_response(
+  p_token   TEXT,
+  p_answers JSONB
+)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = ''
+AS $$
+DECLARE
+  v_invite_id UUID;
+  v_poll_id   UUID;
+  v_closed    BOOLEAN;
+  v_answer    JSONB;
+  v_date_id   UUID;
+  v_val       BOOLEAN;
+BEGIN
+  SELECT id, poll_id INTO v_invite_id, v_poll_id
+    FROM public.poll_invites WHERE token = p_token;
+  IF NOT FOUND THEN
+    RAISE EXCEPTION 'Poll link not found' USING ERRCODE = '22023';
+  END IF;
+
+  SELECT (closed_at IS NOT NULL OR closes_at < NOW())
+    INTO v_closed FROM public.polls WHERE id = v_poll_id;
+  IF v_closed THEN
+    RAISE EXCEPTION 'This poll has closed' USING ERRCODE = '22023';
+  END IF;
+
+  IF p_answers IS NULL OR jsonb_typeof(p_answers) <> 'array' THEN
+    RAISE EXCEPTION 'answers must be a JSON array' USING ERRCODE = '22023';
+  END IF;
+
+  FOR v_answer IN SELECT * FROM jsonb_array_elements(p_answers) LOOP
+    v_date_id := (v_answer->>'poll_date_id')::UUID;
+    v_val     := (v_answer->>'answer')::BOOLEAN;
+
+    -- Guard: the poll_date must belong to this invite's poll.
+    IF NOT EXISTS (
+      SELECT 1 FROM public.poll_dates
+       WHERE id = v_date_id AND poll_id = v_poll_id
+    ) THEN
+      RAISE EXCEPTION 'poll_date_id does not belong to this poll' USING ERRCODE = '22023';
+    END IF;
+
+    INSERT INTO public.poll_responses (poll_invite_id, poll_date_id, answer)
+    VALUES (v_invite_id, v_date_id, v_val)
+    ON CONFLICT (poll_invite_id, poll_date_id)
+    DO UPDATE SET answer = EXCLUDED.answer, submitted_at = NOW();
+  END LOOP;
+END;
+$$;
+
+REVOKE EXECUTE ON FUNCTION public.submit_poll_response(TEXT, JSONB) FROM PUBLIC;
+GRANT  EXECUTE ON FUNCTION public.submit_poll_response(TEXT, JSONB) TO anon, authenticated;
