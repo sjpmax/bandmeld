@@ -3,6 +3,7 @@ import Link from "next/link";
 import { createClient, requireUserId } from "@/utils/supabase/server";
 import { UnavailabilityForm } from "@/components/availability/unavailability-form";
 import { GoogleConnectButton } from "@/components/availability/google-connect-button";
+import { ClearScheduleButton } from "@/components/availability/clear-schedule-button";
 import {
   disconnectGoogleCalendar,
   removeUnavailability,
@@ -162,7 +163,10 @@ export default async function MyAvailabilityPage({
       <UnavailabilityForm />
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-xl font-semibold">Upcoming blocks</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 className="text-xl font-semibold">Upcoming blocks</h2>
+          <ClearScheduleButton count={blocks?.length ?? 0} />
+        </div>
         {blocks && blocks.length > 0 ? (
           <ul className="flex flex-col gap-2">
             {blocks.map((b) => (

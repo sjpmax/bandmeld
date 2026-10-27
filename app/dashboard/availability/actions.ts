@@ -4,7 +4,6 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { ActionResult } from "@/types";
-import type { ReviewableEvent } from "@/lib/google-calendar";
 import { clearGoogleTokens } from "@/lib/google-tokens";
 import type { ReviewableEvent } from "@/types/calendar-import";
 
@@ -32,6 +31,19 @@ export async function addUnavailability(
   const profileId = claims?.claims?.sub;
   if (!profileId) return { ok: false, error: "You're signed out." };
 
+  // Dedupe: if the user already has a block covering the exact same range
+  // with the same reason, skip the insert and tell them.
+  const { data: existing } = await supabase
+    .from("member_unavailabilities")
+    .select("id, reason")
+    .eq("profile_id", profileId)
+    .eq("start_date", startDate)
+    .eq("end_date", endDate);
+  const alreadyExists = (existing ?? []).some((r) => (r.reason ?? null) === reason);
+  if (alreadyExists) {
+    return { ok: false, error: "You already have this block." };
+  }
+
   const { error } = await supabase.from("member_unavailabilities").insert({
     profile_id: profileId,
     start_date: startDate,
@@ -44,6 +56,45 @@ export async function addUnavailability(
 
   revalidatePath("/dashboard/availability");
   return { ok: true, message: isTentative ? "Marked as a maybe." : "Dates blocked." };
+}
+
+/**
+ * Deletes every upcoming (end_date >= today) unavailability for the signed-in
+ * user. Backs the "Clear schedule" button on the availability page. RLS
+ * enforces ownership, so a bad id passed from the client can't nuke someone
+ * else's blocks.
+ */
+export async function clearAllUpcomingUnavailabilities(): Promise<ActionResult<{ count: number }>> {
+  const supabase = await createClient();
+  const { data: claims } = await supabase.auth.getClaims();
+  const profileId = claims?.claims?.sub;
+  if (!profileId) return { ok: false, error: "You're signed out." };
+
+  const today = new Date().toISOString().slice(0, 10);
+
+  const { count } = await supabase
+    .from("member_unavailabilities")
+    .select("*", { count: "exact", head: true })
+    .eq("profile_id", profileId)
+    .gte("end_date", today);
+
+  const { error } = await supabase
+    .from("member_unavailabilities")
+    .delete()
+    .eq("profile_id", profileId)
+    .gte("end_date", today);
+
+  if (error) return { ok: false, error: error.message };
+
+  revalidatePath("/dashboard/availability");
+  const n = count ?? 0;
+  return {
+    ok: true,
+    data: { count: n },
+    message: n === 0
+      ? "No upcoming blocks to clear."
+      : `Cleared ${n} upcoming block${n === 1 ? "" : "s"}.`,
+  };
 }
 
 /** Flip an existing block between firm and tentative. */
@@ -212,11 +263,34 @@ export async function applyIcsImport(formData: FormData): Promise<void> {
     redirect("/dashboard/availability?import_error=nothing_selected");
   }
 
-  const { error } = await supabase.from("member_unavailabilities").insert(rows);
+  // Dedupe against existing blocks — mirror the Google import's behaviour.
+  const candidateStarts = Array.from(new Set(rows.map((r) => r.start_date)));
+  const { data: existingRows } = await supabase
+    .from("member_unavailabilities")
+    .select("start_date, end_date, reason")
+    .eq("profile_id", profileId)
+    .in("start_date", candidateStarts);
+  const existingKeys = new Set(
+    (existingRows ?? []).map((r) => `${r.start_date}|${r.end_date}|${r.reason ?? ""}`),
+  );
+  const freshRows = rows.filter(
+    (r) => !existingKeys.has(`${r.start_date}|${r.end_date}|${r.reason ?? ""}`),
+  );
+  const skippedCount = rows.length - freshRows.length;
+
+  if (freshRows.length === 0) {
+    redirect(
+      `/dashboard/availability?import_error=all_duplicates&skipped=${skippedCount}`,
+    );
+  }
+
+  const { error } = await supabase.from("member_unavailabilities").insert(freshRows);
   if (error) {
     redirect(`/dashboard/availability?import_error=${encodeURIComponent(error.message)}`);
   }
 
   revalidatePath("/dashboard/availability");
-  redirect(`/dashboard/availability?imported=${rows.length}`);
+  const params = new URLSearchParams({ imported: String(freshRows.length) });
+  if (skippedCount > 0) params.set("skipped", String(skippedCount));
+  redirect(`/dashboard/availability?${params.toString()}`);
 }
