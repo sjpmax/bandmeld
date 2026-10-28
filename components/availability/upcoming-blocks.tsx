@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { ClearScheduleButton } from "./clear-schedule-button";
 
 type ViewMode = "list" | "table";
-const VIEW_STORAGE_KEY = "bandsnap:availability-view";
+const VIEW_STORAGE_KEY = "bandmeld:availability-view";
 
 function readStoredView(): ViewMode {
   if (typeof window === "undefined") return "list";

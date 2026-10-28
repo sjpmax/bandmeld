@@ -4,10 +4,12 @@ import { z } from "zod";
 export const ICON_KINDS = [
   "drum_kit",
   "guitar",
+  "acoustic_guitar",
   "bass_guitar",
   "amp",
   "keys",
   "mic",
+  "di_box",
   "person",
   "label",
 ] as const;
@@ -19,23 +21,27 @@ export type IconKind = (typeof ICON_KINDS)[number];
 export const GEAR_KINDS: IconKind[] = [
   "drum_kit",
   "guitar",
+  "acoustic_guitar",
   "bass_guitar",
   "amp",
   "keys",
   "mic",
+  "di_box",
 ];
 
 // Kinds that trigger the "Add to input list?" nudge when dropped.
-export const INPUT_LIKE_KINDS: IconKind[] = ["mic"];
+export const INPUT_LIKE_KINDS: IconKind[] = ["mic", "di_box"];
 
 // Human labels used in trays and nudges.
 export const KIND_LABELS: Record<IconKind, string> = {
   drum_kit: "Drums",
   guitar: "Guitar",
+  acoustic_guitar: "Acoustic",
   bass_guitar: "Bass",
   amp: "Amp",
   keys: "Keys",
   mic: "Mic",
+  di_box: "DI",
   person: "Person",
   label: "Label",
 };
@@ -86,7 +92,6 @@ const LEGACY_KIND_MIGRATION: Record<string, IconKind | null> = {
   vocal_mic: "mic",
   instrument_mic: "mic",
   monitor_wedge: null,
-  di_box: null,
   power: null,
   riser: null,
 };

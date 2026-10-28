@@ -23,7 +23,7 @@ The import page already landed with a List/Table toggle; the Upcoming blocks lis
 2. **Table "Status" column header** — currently sr-only; promote to a visible `<th>Status</th>`.
 3. **Series card bulk controls** — replace the "pick all" checkbox with three pill-shaped buttons: *Mark all Free*, *Mark all Busy*, *Mark all Maybe*. These set every instance under that series to the chosen state in one click.
 4. **Server action rewrite** — `applyGoogleImport` and `applyIcsImport` consume a status-per-event map instead of a flat set of selected ids; emit `member_unavailabilities` rows only for Busy and Maybe; set `is_tentative = (status === "maybe")`.
-5. **List/Table toggle on `/dashboard/availability`** — above the "Upcoming blocks" section, same segmented pill as import review. Persisted in `bandsnap:availability-view` localStorage key.
+5. **List/Table toggle on `/dashboard/availability`** — above the "Upcoming blocks" section, same segmented pill as import review. Persisted in `bandmeld:availability-view` localStorage key.
 
 ### Out
 
@@ -75,7 +75,7 @@ Upcoming blocks ·  N block(s)                [ ≡ List ] [ ▦ Table ]
 ```
 
 - Same component shape as the import review toolbar.
-- `bandsnap:availability-view` localStorage key (independent from import review's `bandsnap:import-view`).
+- `bandmeld:availability-view` localStorage key (independent from import review's `bandmeld:import-view`).
 - List view = today's current rendering, unchanged.
 - Table view columns: Date (range if start ≠ end) · Day · Status (Firm/Maybe pill, click to toggle) · Reason · Actions (Switch to maybe / Mark as firm, Remove).
 

@@ -48,6 +48,12 @@ type NormalizedOccurrence = {
   occurrenceId: string;
 };
 
+/** Wall-clock YYYY-MM-DD of an ICAL.Time in its own zone — avoids a UTC
+ *  shift when the server runs in UTC (Vercel) but the event is East-Coast. */
+function icalLocalDate(t: ICAL.Time): string {
+  return `${t.year}-${pad(t.month)}-${pad(t.day)}`;
+}
+
 function normalizeOccurrence(
   vevent: ICAL.Event,
   startTime: ICAL.Time,
@@ -55,16 +61,12 @@ function normalizeOccurrence(
   isSeriesInstance: boolean,
 ): NormalizedOccurrence {
   const isAllDay = startTime.isDate;
-  const startJs = startTime.toJSDate();
+  const startDate = icalLocalDate(startTime);
   // ical.js end for an all-day event is exclusive (same convention as iCal
-  // itself). Subtract one day to match our stored end_date (inclusive).
-  const endJsRaw = endTime.toJSDate();
-  const endJs =
-    isAllDay
-      ? new Date(endJsRaw.getTime() - 86_400_000)
-      : endJsRaw;
-  const startDate = toLocalDate(startJs);
-  const endDate = toLocalDate(endJs);
+  // itself). Shift one day back so our stored end_date is inclusive.
+  const endInclusive = isAllDay ? endTime.clone() : endTime;
+  if (isAllDay) endInclusive.day -= 1;
+  const endDate = icalLocalDate(endInclusive);
   const summary = vevent.summary?.trim() || "(Untitled event)";
   const uid = vevent.uid ?? `${startDate}-${summary}`;
   const transp = vevent.component.getFirstPropertyValue("transp");

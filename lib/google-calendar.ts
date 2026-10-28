@@ -154,6 +154,20 @@ function diffDaysInclusive(start: string, end: string): number {
   return Math.round((b - a) / 86_400_000) + 1;
 }
 
+/**
+ * Local wall-clock date (YYYY-MM-DD) of an RFC3339 dateTime at its own offset.
+ * Google returns timed events as e.g. "2026-11-07T19:00:00-05:00"; the first
+ * 10 chars already name the event's local date, which is what the user sees
+ * on their calendar. Round-tripping through `new Date(...)` would re-interpret
+ * it in the server's timezone (UTC on Vercel), shifting East-Coast evenings
+ * to the next day. For a bare "Z" (UTC) string we honor UTC as-is.
+ */
+function localDateOfDateTime(iso: string): string {
+  const m = /^(\d{4}-\d{2}-\d{2})T/.exec(iso);
+  if (m && m[1]) return m[1];
+  return toLocalDate(new Date(iso));
+}
+
 function eventToRange(ev: GoogleEvent): { startDate: string; endDate: string; isAllDay: boolean } {
   if (ev.start.date && ev.end.date) {
     // All-day: Google's end.date is exclusive — subtract one day.
@@ -167,12 +181,13 @@ function eventToRange(ev: GoogleEvent): { startDate: string; endDate: string; is
       isAllDay: true,
     };
   }
-  // Timed event (or edge case): use the dates of the dateTime boundaries.
-  const startDt = new Date(ev.start.dateTime ?? ev.start.date ?? "");
-  const endDt = new Date(ev.end.dateTime ?? ev.end.date ?? ev.start.dateTime ?? "");
+  // Timed event: read the local wall-clock date straight from the dateTime
+  // string so the server's timezone can't shift it.
+  const startRaw = ev.start.dateTime ?? ev.start.date ?? "";
+  const endRaw = ev.end.dateTime ?? ev.end.date ?? ev.start.dateTime ?? "";
   return {
-    startDate: toLocalDate(startDt),
-    endDate: toLocalDate(endDt),
+    startDate: localDateOfDateTime(startRaw),
+    endDate: localDateOfDateTime(endRaw),
     isAllDay: false,
   };
 }
