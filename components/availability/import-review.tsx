@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import type { ReviewPayload, ReviewableEvent, ReviewSeries } from "@/types/calendar-import";
 
 type ViewMode = "list" | "table";
-const VIEW_STORAGE_KEY = "bandsnap:import-view";
+const VIEW_STORAGE_KEY = "bandmeld:import-view";
 
 function readStoredView(): ViewMode {
   if (typeof window === "undefined") return "list";

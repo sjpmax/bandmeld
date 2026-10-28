@@ -4,7 +4,7 @@ Read this once at the start of the brainstorm, then let the skill drive. The rep
 
 ## Why this exists
 
-The sound engineer at a DIY venue wants a top-down diagram of where every musician and piece of gear will be on stage — mic positions, monitor wedges, DI boxes, cab placements. A one-page PDF handles this today (we already have `bands.tech_rider_url` for that), but a native builder would let the band assemble + update the plot inside BandSnap, render it responsively on the public EPK, and keep it in sync with roster changes (new drummer joins → their position appears).
+The sound engineer at a DIY venue wants a top-down diagram of where every musician and piece of gear will be on stage — mic positions, monitor wedges, DI boxes, cab placements. A one-page PDF handles this today (we already have `bands.tech_rider_url` for that), but a native builder would let the band assemble + update the plot inside BandMeld, render it responsively on the public EPK, and keep it in sync with roster changes (new drummer joins → their position appears).
 
 **The feature is for the tech rider path, not a replacement for the whole rider.** Signal lists, backline requirements, hospitality — those probably stay in the PDF (or get their own UI later). Scope this to the diagram.
 

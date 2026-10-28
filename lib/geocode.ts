@@ -83,7 +83,7 @@ export async function searchCities(query: string): Promise<CitySuggestion[]> {
   const res = await fetch(url, {
     headers: {
       // Nominatim's usage policy requires a descriptive UA.
-      "User-Agent": "BandSnap/0.1 (https://bandsnap.vercel.app)",
+      "User-Agent": "BandMeld/0.1 (https://bandmeld.com)",
       "Accept-Language": "en",
     },
     // Cache for 24h — same query won't hit Nominatim again for a day.

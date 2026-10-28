@@ -25,7 +25,7 @@ export default async function ExplorePage() {
       <header>
         <h1 className="text-3xl font-bold">Explore bands</h1>
         <p className="mt-1 opacity-70">
-          Every public BandSnap profile. &quot;Local bands in your genre&quot; filtering is coming
+          Every public BandMeld profile. &quot;Local bands in your genre&quot; filtering is coming
           soon.
         </p>
       </header>

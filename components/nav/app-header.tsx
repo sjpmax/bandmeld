@@ -35,7 +35,7 @@ export function AppHeader({ authed, bandCount }: Props) {
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
         <Link href={authed ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold">
           <Logo height={32} />
-          <span className="hidden sm:inline">BandSnap</span>
+          <span className="hidden sm:inline">BandMeld</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link href="/explore">Explore</Link>
