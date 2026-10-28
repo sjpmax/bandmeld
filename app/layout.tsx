@@ -3,7 +3,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: { default: "BandSnap", template: "%s · BandSnap" },
+  title: { default: "BandMeld", template: "%s · BandMeld" },
   description: "Band availability, hosted EPKs and turnkey show packages for DIY bands.",
 };
 

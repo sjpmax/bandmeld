@@ -1,4 +1,4 @@
-# **Product Requirement Document (PRD): BandSnap**
+# **Product Requirement Document (PRD): BandMeld**
 
 **Version:** 1.0  
 **Status:** Draft / Specification  
@@ -8,7 +8,7 @@
 
 ### **1.1 Overview**
 
-**BandSnap** is a multi-sided marketplace and collaboration platform built for the original, DIY, and local live music scene (indie, punk, metal, rock, country, hip-hop). It eliminates the chaotic manual back-and-forth of show booking by allowing individual band members to sync calendars, package genre-matched 3–4 act bills, pitch turnkey show packages to venues, and build accountability through a double-blind, 3-way post-show rating system.
+**BandMeld** is a multi-sided marketplace and collaboration platform built for the original, DIY, and local live music scene (indie, punk, metal, rock, country, hip-hop). It eliminates the chaotic manual back-and-forth of show booking by allowing individual band members to sync calendars, package genre-matched 3–4 act bills, pitch turnkey show packages to venues, and build accountability through a double-blind, 3-way post-show rating system.
 
 ### **1.2 Core Problem Statement**
 
@@ -33,7 +33,7 @@
 
 ## **3\. Core Features & Functional Requirements**
 
-\[ Member Calendars \] ──\> \[ BandSnap Open Calendar \]  
+\[ Member Calendars \] ──\> \[ BandMeld Open Calendar \]  
                                    │  
                                    ▼  
 \[ Band A \] ── Sync Co-Acts ──\> \[ 3–4 Act Bill Package \]  
@@ -71,7 +71,7 @@
 ### **3.4 Module 4: Venue Pitching & Reverse Marketplace**
 
 > * **Outbound Shareable Pitch Link:** Generates a clean, non-authenticated web page link containing all 3–4 band EPKs, combined music samples, total estimated draw, and tech requirements. Bands can email this directly to any venue booking agent.  
-> * **Inbound Venue Board:** Venues post open calendar slots (e.g., *"Seeking 3 Country/Western acts for Fri, Nov 14"*). Pre-formed BandSnap bills can submit their pitch package in one click.  
+> * **Inbound Venue Board:** Venues post open calendar slots (e.g., *"Seeking 3 Country/Western acts for Fri, Nov 14"*). Pre-formed BandMeld bills can submit their pitch package in one click.  
 > * **One-Click Venue Approval:** Booking agents review the pitch package and click **Approve** or **Decline**.
 
 ### **3.5 Module 5: Double-Blind 3-Way Rating System**
@@ -96,7 +96,7 @@ Show Ends ──\> 48-Hr Review Window Opens ──\> Double-Blind Submissions �
 ### **3.6 Module 6: Local Creative Directory (Photographers & Crew)**
 
 > * **Creative Profiles:** Photographers, audio engineers, and poster designers create profiles with portfolios and standard gig rates.  
-> * **Gig Matching:** When a 3–4 act bill is confirmed, BandSnap presents available local photographers for that date: *"Need a photographer for your show at The Velvet Room on Nov 14?"*
+> * **Gig Matching:** When a 3–4 act bill is confirmed, BandMeld presents available local photographers for that date: *"Need a photographer for your show at The Velvet Room on Nov 14?"*
 
 ## **4\. Technical Architecture & Stack**
 
@@ -133,6 +133,6 @@ Phase 4: Mobile & Monetization (Phase 2 App)
 
 ## **6\. Cold-Start Strategy & Launch Tactics**
 
-> 1. **Band-First Utility:** Don't wait for venues to join. Build the internal calendar sync and EPK builder so bands use BandSnap purely to organize themselves and pitch venues via standard email.  
+> 1. **Band-First Utility:** Don't wait for venues to join. Build the internal calendar sync and EPK builder so bands use BandMeld purely to organize themselves and pitch venues via standard email.  
 > 2. **Scene Connectors:** Onboard 5–10 key DIY show organizers per target city. Their adoption naturally pulls 20–40 secondary bands into the ecosystem to fill co-bills.  
-> 3. **Zero-Friction Venue Onboarding:** Booking agents do not need an account to review a BandSnap pitch link. They only register when they accept a show package.
+> 3. **Zero-Friction Venue Onboarding:** Booking agents do not need an account to review a BandMeld pitch link. They only register when they accept a show package.

@@ -40,7 +40,7 @@ export default async function BandEpkPage({ params }: Props) {
     <main className="mx-auto flex max-w-3xl flex-col gap-10 px-4 py-10">
       {band.is_fake && (
         <aside className="rounded-xl border border-amber-500/50 bg-amber-500/10 p-3 text-sm">
-          <strong>DEMO band</strong> — seeded data for testing BandSnap. Not a real act.
+          <strong>DEMO band</strong> — seeded data for testing BandMeld. Not a real act.
         </aside>
       )}
 

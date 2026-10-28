@@ -1,8 +1,8 @@
-# BandSnap
+# BandMeld
 
 Multi-sided marketplace for the DIY / local live music scene. Bands sync calendars, assemble 3–4 act bills on mutually open dates, pitch turnkey packages to venues, and hold each other accountable via a double-blind 3-way rating system.
 
-Full product spec: [band snap PRD.md](./band%20snap%20PRD.md).
+Full product spec: [bandmeld PRD.md](./bandmeld%20PRD.md).
 
 **Stack:** Next.js 16 (App Router) · React 19 · Tailwind 4 · Supabase (`@supabase/ssr`) · TypeScript (strict).
 

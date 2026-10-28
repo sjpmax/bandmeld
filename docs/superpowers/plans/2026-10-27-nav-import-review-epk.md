@@ -137,7 +137,7 @@ export function AppHeader({ authed, bandCount }: Props) {
       <nav className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
         <Link href={authed ? "/dashboard" : "/"} className="flex items-center gap-2 font-bold">
           <Logo height={32} />
-          <span className="hidden sm:inline">BandSnap</span>
+          <span className="hidden sm:inline">BandMeld</span>
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link href="/explore">Explore</Link>
@@ -242,7 +242,7 @@ Start the dev server if it is not already up:
 npm run dev
 ```
 In another terminal, open `http://localhost:3001/dashboard` while signed in. Expected:
-- Header looks identical to before (Logo · BandSnap · Explore · My band(s) · My availability · theme · Sign out).
+- Header looks identical to before (Logo · BandMeld · Explore · My band(s) · My availability · theme · Sign out).
 - With a signed-in user in zero or 2+ bands, the link reads "My bands".
 - With a user in exactly one band, it reads "My band".
 - Build sha footer still renders at the bottom.
@@ -462,7 +462,7 @@ Near the top of the component (next to the existing `useState` hooks), add:
 
 ```tsx
 type ViewMode = "list" | "table";
-const VIEW_STORAGE_KEY = "bandsnap:import-view";
+const VIEW_STORAGE_KEY = "bandmeld:import-view";
 
 function readStoredView(): ViewMode {
   if (typeof window === "undefined") return "list";

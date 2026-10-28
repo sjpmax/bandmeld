@@ -9,7 +9,7 @@ export default async function HomePage() {
     <main className="mx-auto flex min-h-dvh max-w-3xl flex-col gap-16 px-4 py-16">
       <section className="flex flex-col items-start gap-6">
         <Logo height={120} />
-        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">BandSnap</h1>
+        <h1 className="text-4xl font-bold tracking-tight sm:text-6xl">BandMeld</h1>
         <p className="max-w-prose text-xl opacity-80">
           Sync your band&apos;s calendars, bundle co-bills with other local acts, and pitch venues a
           turnkey show package — without the group-text spiral.
@@ -57,7 +57,7 @@ export default async function HomePage() {
       </section>
 
       <section className="flex flex-col gap-4">
-        <h2 className="text-2xl font-bold">What BandSnap does</h2>
+        <h2 className="text-2xl font-bold">What BandMeld does</h2>
         <ul className="flex flex-col gap-4">
           <li>
             <h3 className="font-semibold">1. Members post their blocks, we show the open dates.</h3>
