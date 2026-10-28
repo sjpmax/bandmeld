@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 import type { ActionResult } from "@/types";
 import { clearGoogleTokens } from "@/lib/google-tokens";
-import type { ReviewableEvent } from "@/types/calendar-import";
+import { parseStatusEntry, type ImportStatus, type ReviewableEvent } from "@/types/calendar-import";
 
 export async function addUnavailability(
   _prev: ActionResult,
@@ -165,7 +165,11 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
   if (!profileId) redirect("/login?next=/dashboard/availability");
 
   const payloadRaw = String(formData.get("payload") ?? "");
-  const selectedIds = new Set(formData.getAll("selected").map((v) => String(v)));
+  const statusById = new Map<string, ImportStatus>();
+  for (const raw of formData.getAll("status")) {
+    const parsed = parseStatusEntry(String(raw));
+    if (parsed) statusById.set(parsed.id, parsed.status);
+  }
 
   let events: ReviewableEvent[];
   try {
@@ -175,21 +179,26 @@ export async function applyGoogleImport(formData: FormData): Promise<void> {
   }
 
   const rows = events
-    .filter((e) => selectedIds.has(e.id))
-    .map((e) => ({
-      profile_id: profileId,
-      start_date: String(e.startDate ?? ""),
-      end_date: String(e.endDate ?? ""),
-      reason: String(e.summary ?? "").slice(0, 120),
-    }));
+    .map((e) => {
+      const status = statusById.get(e.id) ?? "free";
+      if (status === "free") return null;
+      return {
+        profile_id: profileId,
+        start_date: String(e.startDate ?? ""),
+        end_date: String(e.endDate ?? ""),
+        reason: String(e.summary ?? "").slice(0, 120),
+        is_tentative: status === "maybe",
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (rows.length === 0) {
     redirect("/dashboard/availability?import_error=nothing_selected");
   }
 
   // Dedupe against rows this user already has at the same date range + reason.
-  // Fixes #9: re-importing a calendar duplicated every event. Query by the
-  // candidate start_dates to keep the comparison small on busy calendars.
+  // The dedupe key does NOT include is_tentative — a repeated import that
+  // matches start+end+reason skips, keeping the existing row's firmness.
   const candidateStarts = Array.from(new Set(rows.map((r) => r.start_date)));
   const { data: existingRows } = await supabase
     .from("member_unavailabilities")
@@ -241,7 +250,11 @@ export async function applyIcsImport(formData: FormData): Promise<void> {
   if (!profileId) redirect("/login?next=/dashboard/availability");
 
   const payloadRaw = String(formData.get("payload") ?? "");
-  const selectedIds = new Set(formData.getAll("selected").map((v) => String(v)));
+  const statusById = new Map<string, ImportStatus>();
+  for (const raw of formData.getAll("status")) {
+    const parsed = parseStatusEntry(String(raw));
+    if (parsed) statusById.set(parsed.id, parsed.status);
+  }
 
   let events: ReviewableEvent[];
   try {
@@ -251,13 +264,18 @@ export async function applyIcsImport(formData: FormData): Promise<void> {
   }
 
   const rows = events
-    .filter((e) => selectedIds.has(e.id))
-    .map((e) => ({
-      profile_id: profileId,
-      start_date: String(e.startDate ?? ""),
-      end_date: String(e.endDate ?? ""),
-      reason: String(e.summary ?? "").slice(0, 120),
-    }));
+    .map((e) => {
+      const status = statusById.get(e.id) ?? "free";
+      if (status === "free") return null;
+      return {
+        profile_id: profileId,
+        start_date: String(e.startDate ?? ""),
+        end_date: String(e.endDate ?? ""),
+        reason: String(e.summary ?? "").slice(0, 120),
+        is_tentative: status === "maybe",
+      };
+    })
+    .filter((r): r is NonNullable<typeof r> => r !== null);
 
   if (rows.length === 0) {
     redirect("/dashboard/availability?import_error=nothing_selected");
