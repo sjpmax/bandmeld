@@ -34,32 +34,40 @@ export default async function DashboardPage() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {memberships.map(({ band, is_admin, role_in_band }) =>
             band ? (
-              <li key={band.id} className="flex gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
-                {band.logo_url ? (
-                  <img
-                    src={band.logo_url}
-                    alt={`${band.name} logo`}
-                    className="h-14 w-14 shrink-0 rounded-md border border-black/10 bg-paper object-contain p-1 dark:border-white/10"
-                  />
-                ) : (
-                  <div
-                    aria-hidden
-                    className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-black/20 text-xs opacity-50 dark:border-white/20"
-                  >
-                    Logo
+              <li key={band.id} className="relative flex gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
+                <Link
+                  href={`/dashboard/bands/${band.id}`}
+                  aria-label={`Open ${band.name} dashboard`}
+                  className="absolute inset-0 rounded-xl focus-visible:outline focus-visible:outline-2 focus-visible:outline-accent"
+                />
+                <div className="pointer-events-none relative z-10 flex min-w-0 flex-1 gap-3">
+                  {band.logo_url ? (
+                    <img
+                      src={band.logo_url}
+                      alt={`${band.name} logo`}
+                      className="h-14 w-14 shrink-0 rounded-md border border-black/10 bg-paper object-contain p-1 dark:border-white/10"
+                    />
+                  ) : (
+                    <div
+                      aria-hidden
+                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-md border border-dashed border-black/20 text-xs opacity-50 dark:border-white/20"
+                    >
+                      Logo
+                    </div>
+                  )}
+                  <div className="min-w-0 flex-1">
+                    <p className="text-lg font-semibold">{band.name}</p>
+                    <p className="text-sm opacity-70">
+                      {band.home_city} · {role_in_band}
+                      {is_admin ? " · Admin" : ""}
+                    </p>
+                    <Link
+                      href={`/bands/${band.slug}`}
+                      className="pointer-events-auto relative mt-2 inline-block text-sm underline"
+                    >
+                      View public EPK
+                    </Link>
                   </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <Link href={`/dashboard/bands/${band.id}`} className="text-lg font-semibold">
-                    {band.name}
-                  </Link>
-                  <p className="text-sm opacity-70">
-                    {band.home_city} · {role_in_band}
-                    {is_admin ? " · Admin" : ""}
-                  </p>
-                  <Link href={`/bands/${band.slug}`} className="mt-2 inline-block text-sm underline">
-                    View public EPK
-                  </Link>
                 </div>
               </li>
             ) : null,
