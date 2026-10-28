@@ -9,7 +9,7 @@
 Three threads from one session:
 
 1. The signed-in top nav disappears on `/explore`, because `app/explore/page.tsx` lives outside the `app/dashboard` layout. Users lose their way to go back.
-2. There is no nav link to the user's own bands. Today, "My bands" is only reachable by clicking the BandSnap logo back to `/dashboard`.
+2. There is no nav link to the user's own bands. Today, "My bands" is only reachable by clicking the BandMeld logo back to `/dashboard`.
 3. The Google Calendar import review page tucks the "Did I miss one?" section at the bottom behind a collapsed expander, and the list of events only has one presentation (card list). Users miss events they wanted to rescue, and some would prefer a denser table on long calendars.
 4. The EPK is missing a plain website URL field and a free-text "sound description" paragraph. Bands don't know what to write, so a few hint prompts should sit next to the form.
 
@@ -91,7 +91,7 @@ Changes to `components/availability/import-review.tsx` only. No new files.
 
 #### B2. List / table toggle
 
-- Add a `useState<"list" | "table">` initialized from `localStorage` under key `bandsnap:import-view`. The initializer runs inside `useState(() => { … })` with try/catch so a locked-down browser falls back to `"list"` without throwing.
+- Add a `useState<"list" | "table">` initialized from `localStorage` under key `bandmeld:import-view`. The initializer runs inside `useState(() => { … })` with try/catch so a locked-down browser falls back to `"list"` without throwing.
 - `useEffect` writes the chosen value back to localStorage whenever it changes, also wrapped in try/catch.
 - A segmented control sits in a new toolbar row above the first section:
   ```

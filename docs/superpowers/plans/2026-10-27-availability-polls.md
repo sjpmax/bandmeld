@@ -75,7 +75,7 @@ Append:
 ```
 # Resend (transactional email) — required for availability polls
 RESEND_API_KEY=
-# Must be a verified sender on the Resend domain, e.g. "BandSnap <no-reply@mail.yourdomain.com>"
+# Must be a verified sender on the Resend domain, e.g. "BandMeld <no-reply@mail.bandmeld.com>"
 EMAIL_FROM=
 ```
 

@@ -888,7 +888,7 @@ export function StagePlotMobileNudge({ bandSlug }: Props) {
         Stage plot editing needs a larger screen.
       </p>
       <p className="opacity-70">
-        Open BandSnap on a tablet or desktop to drag icons onto the stage.
+        Open BandMeld on a tablet or desktop to drag icons onto the stage.
       </p>
       <Link
         href={`/bands/${bandSlug}/stage-plot`}

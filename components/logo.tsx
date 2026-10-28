@@ -1,7 +1,7 @@
 import { useId } from "react";
 
 /**
- * BandSnap mark (placeholder until the final artwork arrives).
+ * BandMeld mark (placeholder until the final artwork arrives).
  * Two puzzle pieces — band (left) and venue (right) — joined by beamed
  * eighth notes. Inline SVG so colours follow the site's light/dark theme.
  *
@@ -20,7 +20,7 @@ export function Logo({ height = 40, className = "" }: { height?: number; classNa
       height={height}
       width={Math.round(height * 1.5)}
       role="img"
-      aria-label="BandSnap"
+      aria-label="BandMeld"
       className={className}
     >
       <defs>

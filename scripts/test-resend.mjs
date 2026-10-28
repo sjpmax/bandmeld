@@ -8,7 +8,7 @@
 //
 // Prereqs in .env.local:
 //   RESEND_API_KEY=re_...
-//   EMAIL_FROM=BandSnap <onboarding@resend.dev>   # or your verified sender
+//   EMAIL_FROM=BandMeld <onboarding@resend.dev>   # or your verified sender
 
 const apiKey = process.env.RESEND_API_KEY;
 const from = process.env.EMAIL_FROM;
