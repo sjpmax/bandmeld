@@ -34,7 +34,7 @@ export default async function DashboardPage() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {memberships.map(({ band, is_admin, role_in_band }) =>
             band ? (
-              <li key={band.id} className="relative flex gap-3 rounded-xl border border-black/10 p-4 dark:border-white/10">
+              <li key={band.id} className="relative flex gap-3 rounded-xl border border-black/10 bg-white p-4 dark:border-white/10 dark:bg-white/5">
                 <Link
                   href={`/dashboard/bands/${band.id}`}
                   aria-label={`Open ${band.name} dashboard`}
