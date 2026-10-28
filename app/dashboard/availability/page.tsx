@@ -97,7 +97,7 @@ export default async function MyAvailabilityPage({
         </p>
       ) : sp.import_error === "nothing_selected" ? (
         <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm">
-          You didn&apos;t pick any events.
+          You didn&apos;t block any events — everything was marked Free.
         </p>
       ) : sp.import_error ? (
         <p className="rounded-xl border border-red-500/40 bg-red-500/10 p-3 text-sm">
