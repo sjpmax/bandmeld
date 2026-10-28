@@ -3,7 +3,7 @@ import Link from "next/link";
 import { createClient, requireUserId } from "@/utils/supabase/server";
 import { UnavailabilityForm } from "@/components/availability/unavailability-form";
 import { GoogleConnectButton } from "@/components/availability/google-connect-button";
-import { ClearScheduleButton } from "@/components/availability/clear-schedule-button";
+import { UpcomingBlocks } from "@/components/availability/upcoming-blocks";
 import {
   disconnectGoogleCalendar,
   removeUnavailability,
@@ -162,57 +162,11 @@ export default async function MyAvailabilityPage({
 
       <UnavailabilityForm />
 
-      <section className="flex flex-col gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2 className="text-xl font-semibold">Upcoming blocks</h2>
-          <ClearScheduleButton count={blocks?.length ?? 0} />
-        </div>
-        {blocks && blocks.length > 0 ? (
-          <ul className="flex flex-col gap-2">
-            {blocks.map((b) => (
-              <li
-                key={b.id}
-                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-black/10 p-3 dark:border-white/10"
-              >
-                <div className="flex-1 min-w-0">
-                  <p className="flex flex-wrap items-center gap-2 font-medium">
-                    <span>
-                      {b.start_date === b.end_date
-                        ? fmt(b.start_date)
-                        : `${fmt(b.start_date)} → ${fmt(b.end_date)}`}
-                    </span>
-                    {b.is_tentative && (
-                      <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
-                        Maybe
-                      </span>
-                    )}
-                  </p>
-                  {b.reason && <p className="text-sm opacity-70">{b.reason}</p>}
-                </div>
-                <div className="flex items-center gap-3">
-                  <form action={setUnavailabilityTentative.bind(null, b.id, !b.is_tentative)}>
-                    <button
-                      type="submit"
-                      className="text-sm opacity-70 hover:underline hover:opacity-100"
-                    >
-                      {b.is_tentative ? "Mark as firm" : "Switch to maybe"}
-                    </button>
-                  </form>
-                  <form action={removeUnavailability.bind(null, b.id)}>
-                    <button type="submit" className="text-sm text-red-600 hover:underline">
-                      Remove
-                    </button>
-                  </form>
-                </div>
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <p className="rounded-xl border border-dashed border-black/20 p-6 text-center opacity-80 dark:border-white/20">
-            No blocked dates. Add a range above or pull from Google Calendar.
-          </p>
-        )}
-      </section>
+      <UpcomingBlocks
+        blocks={blocks ?? []}
+        removeAction={removeUnavailability}
+        toggleTentativeAction={setUnavailabilityTentative}
+      />
     </div>
   );
 }
