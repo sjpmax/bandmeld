@@ -1,33 +1,936 @@
 @import "tailwindcss";
 @source not "../.vs";
 
-/* Tailwind 4: switch the `dark:` variant to respond to a `.dark` class
-   on <html>, instead of the OS prefers-color-scheme default. A tiny
-   inline script in the root layout sets the class pre-render based on
-   localStorage + OS so there's no theme flash on first paint. */
+/* Tailwind 4: `dark:` responds to a `.dark` class on <html>.
+   A tiny inline script in the root layout picks the theme + dark
+   state pre-render so there's no flash. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* ============================================================
+   TWO THEMES, picked at runtime via [data-theme=...] on <html>:
+     - "memphis": Memphis Group 1981 — hot pink, cyan, mustard,
+       mint, grape, terrazzo polka dots, chunky geometric type.
+     - "comic":   Pop-art comic book — red, yellow, blue, Ben-Day
+       halftone dots, Bangers display, speech-bubble panels.
+   Shared skeleton: thick black borders + hard-edge offset shadows.
+   ============================================================ */
+
 @theme {
-  --color-ink: #141414;
-  --color-paper: #faf8f4;
-  --color-accent: #e8462b;
-  --font-sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  /* Palette tokens are theme-neutral at the Tailwind level; actual
+     values are set per-theme below so classes like `bg-accent`
+     automatically pick up the active palette. */
+  --color-paper: #FFF8E7;
+  --color-ink: #0F0F0F;
+  --color-accent: #FF2E88;
+  --color-cyan: #00C9E8;
+  --color-mustard: #FFC32B;
+  --color-mint: #2EE8A3;
+  --color-grape: #8E4CFF;
+
+  --font-sans: "Rubik", "Comic Neue", "Space Grotesk", ui-sans-serif,
+    system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-display: "Rubik Mono One", "Bangers", "Rubik", ui-sans-serif,
+    system-ui, sans-serif;
 }
 
-html {
-  color-scheme: light;
+html { color-scheme: light; }
+html.dark { color-scheme: dark; }
+
+/* ============================================================
+   THEME: default — clean modern SaaS. White, indigo accent,
+   soft shadows, Plus Jakarta Sans. No decoration, no borders
+   fighting the layout. This is what everyone sees by default;
+   the four fancy themes are reached via the hidden picker.
+   ============================================================ */
+html[data-theme="default"] {
+  --color-paper: #FFFFFF;
+  --color-ink: #0F172A;
+  --color-accent: #0C4A6E;         /* sky-900 — dark blue-leaning teal */
+  --color-accent-hover: #082F49;   /* sky-950 */
+  --color-cyan: #0EA5E9;           /* sky-500 */
+  --color-mustard: #F59E0B;        /* amber-500 */
+  --color-mint: #10B981;           /* emerald-500 */
+  --color-grape: #8B5CF6;          /* violet-500 */
+  --font-sans: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", "Inter", ui-sans-serif, system-ui, sans-serif;
 }
 
-html.dark {
-  color-scheme: dark;
+html[data-theme="default"] body {
+  background-color: #F8FAFC;       /* slate-50 */
+  color: var(--color-ink);
+  font-family: var(--font-sans);
 }
 
-body {
-  background: var(--color-paper);
+html[data-theme="default"].dark body {
+  background-color: #0B1120;
+  color: #E2E8F0;
+}
+
+html[data-theme="default"] h1,
+html[data-theme="default"] h2,
+html[data-theme="default"] h3,
+html[data-theme="default"] .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.015em;
+  line-height: 1.2;
+  text-transform: none;
+  font-weight: 700;
+}
+
+html[data-theme="default"] section > h2 {
+  display: block;
+  width: auto;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  color: var(--color-ink);
+  transform: none;
+}
+
+/* Panels: white card, hair border, soft shadow — override shared
+   skeleton with !important since it ships thick-outline defaults. */
+html[data-theme="default"] li.rounded-xl,
+html[data-theme="default"] section.rounded-xl,
+html[data-theme="default"] div.rounded-xl,
+html[data-theme="default"] article.rounded-xl,
+html[data-theme="default"] p.rounded-xl {
+  background-color: #FFFFFF !important;
+  border: 1px solid #E2E8F0 !important;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px rgba(15, 23, 42, 0.06) !important;
+  border-radius: 12px;
+}
+html[data-theme="default"].dark li.rounded-xl,
+html[data-theme="default"].dark section.rounded-xl,
+html[data-theme="default"].dark div.rounded-xl,
+html[data-theme="default"].dark article.rounded-xl,
+html[data-theme="default"].dark p.rounded-xl {
+  background-color: #1E293B !important;
+  border-color: #334155 !important;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Buttons: solid indigo primary, white outline secondary */
+html[data-theme="default"] a.rounded-full,
+html[data-theme="default"] button.rounded-full {
+  background: var(--color-accent) !important;
+  color: #fff !important;
+  border: 1px solid var(--color-accent) !important;
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  box-shadow: 0 1px 2px rgba(12, 74, 110, 0.2) !important;
+  text-shadow: none;
+}
+html[data-theme="default"] a.rounded-full:hover,
+html[data-theme="default"] button.rounded-full:hover {
+  background: var(--color-accent-hover) !important;
+  border-color: var(--color-accent-hover) !important;
+  transform: none;
+  box-shadow: 0 4px 12px rgba(12, 74, 110, 0.3) !important;
+}
+html[data-theme="default"] a.rounded-full:active,
+html[data-theme="default"] button.rounded-full:active {
+  transform: translateY(1px);
+  box-shadow: 0 1px 2px rgba(12, 74, 110, 0.2) !important;
+}
+html[data-theme="default"] a.rounded-full:where(.border),
+html[data-theme="default"] button.rounded-full:where(.border) {
+  background: #FFFFFF !important;
+  color: var(--color-ink) !important;
+  border: 1px solid #E2E8F0 !important;
+}
+html[data-theme="default"] a.rounded-full:where(.border):hover,
+html[data-theme="default"] button.rounded-full:where(.border):hover {
+  background: #F8FAFC !important;
+  border-color: #CBD5E1 !important;
+}
+
+/* Form controls — clean slate borders, indigo focus ring */
+html[data-theme="default"] input[type="text"],
+html[data-theme="default"] input[type="email"],
+html[data-theme="default"] input[type="url"],
+html[data-theme="default"] input[type="search"],
+html[data-theme="default"] input[type="password"],
+html[data-theme="default"] input[type="number"],
+html[data-theme="default"] input[type="date"],
+html[data-theme="default"] input[type="time"],
+html[data-theme="default"] input[type="datetime-local"],
+html[data-theme="default"] input:not([type]),
+html[data-theme="default"] textarea,
+html[data-theme="default"] select {
+  background: #FFFFFF;
+  color: var(--color-ink);
+  border: 1px solid #CBD5E1 !important;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  box-shadow: none;
+}
+html[data-theme="default"] input:focus,
+html[data-theme="default"] textarea:focus,
+html[data-theme="default"] select:focus {
+  outline: none;
+  border-color: var(--color-accent) !important;
+  box-shadow: 0 0 0 3px rgba(12, 74, 110, 0.18);
+}
+
+html[data-theme="default"] label {
+  color: var(--color-ink);
+  font-weight: 500;
+}
+
+html[data-theme="default"] a:where(:not(.rounded-full):not(.rounded-xl):not(.no-underline)) {
+  color: var(--color-accent);
+  text-decoration-color: var(--color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+html[data-theme="default"] a:where(:not(.rounded-full):not(.rounded-xl)):hover {
+  color: var(--color-accent-hover);
+  text-decoration-color: var(--color-accent-hover);
+}
+
+/* Active sub-nav tab: the component hard-codes `bg-black text-white`
+   for the active state. In the default theme it should wear the
+   accent color — a solid black pill is too heavy on a white page. */
+html[data-theme="default"] nav a.bg-black,
+html[data-theme="default"] nav a.bg-black.text-white {
+  background-color: var(--color-accent) !important;
+  color: #fff !important;
+}
+html[data-theme="default"] nav a.bg-black:hover {
+  background-color: var(--color-accent-hover) !important;
+}
+
+/* Hide the fancy-theme decor layers in default */
+html[data-theme="default"] .memphis-decor,
+html[data-theme="default"] .comic-decor { display: none; }
+
+/* ============================================================
+   THEME: memphis
+   ============================================================ */
+html[data-theme="memphis"] {
+  --color-paper: #FFF8E7;
+  --color-ink: #0F0F0F;
+  --color-accent: #FF2E88;
+  --color-cyan: #00C9E8;
+  --color-mustard: #FFC32B;
+  --color-mint: #2EE8A3;
+  --color-grape: #8E4CFF;
+  --font-sans: "Rubik", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Rubik Mono One", "Rubik", ui-sans-serif, sans-serif;
+}
+
+html[data-theme="memphis"] body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  background-image:
+    radial-gradient(circle at 12% 18%, var(--color-accent) 0 7px, transparent 8px),
+    radial-gradient(circle at 86% 62%, var(--color-cyan) 0 6px, transparent 7px),
+    radial-gradient(circle at 72% 12%, var(--color-mustard) 0 9px, transparent 10px),
+    radial-gradient(circle at 24% 84%, var(--color-mint) 0 5px, transparent 6px),
+    radial-gradient(circle at 54% 48%, var(--color-grape) 0 5px, transparent 6px),
+    radial-gradient(circle at 38% 72%, var(--color-ink) 0 3px, transparent 4px);
+  background-size: 340px 340px;
+  background-attachment: fixed;
+}
+
+html[data-theme="memphis"].dark body {
+  background-color: #0F0F0F;
+  color: var(--color-paper);
+  background-image:
+    radial-gradient(circle at 12% 18%, var(--color-accent) 0 6px, transparent 7px),
+    radial-gradient(circle at 86% 62%, var(--color-cyan) 0 5px, transparent 6px),
+    radial-gradient(circle at 72% 12%, var(--color-mustard) 0 7px, transparent 8px),
+    radial-gradient(circle at 24% 84%, var(--color-mint) 0 4px, transparent 5px),
+    radial-gradient(circle at 54% 48%, var(--color-grape) 0 4px, transparent 5px);
+  background-size: 340px 340px;
+  background-attachment: fixed;
+}
+
+html[data-theme="memphis"] h1,
+html[data-theme="memphis"] h2,
+html[data-theme="memphis"] h3,
+html[data-theme="memphis"] .font-display {
+  font-family: var(--font-display);
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+  text-transform: uppercase;
+}
+
+html[data-theme="memphis"] section > h2 {
+  display: inline-block;
+  width: fit-content;
+  align-self: flex-start;
+  background: var(--color-mustard);
+  padding: 2px 10px;
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
   color: var(--color-ink);
 }
 
-html.dark body {
-  background: #0f0f0f;
-  color: #f2efe9;
+/* ============================================================
+   THEME: comic — Ben-Day halftone, pop-art primaries
+   ============================================================ */
+html[data-theme="comic"] {
+  --color-paper: #FFF8E1;        /* comic cream */
+  --color-ink: #0F0F0F;
+  --color-accent: #E6394A;       /* comic red  — primary CTA */
+  --color-cyan: #1D4ED8;         /* comic blue */
+  --color-mustard: #FFD60A;      /* comic yellow */
+  --color-mint: #0EA5A5;         /* comic teal */
+  --color-grape: #111827;        /* near-black panel */
+  --font-sans: "Comic Neue", "Patrick Hand", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Bangers", "Luckiest Guy", "Impact", ui-sans-serif, sans-serif;
+}
+
+html[data-theme="comic"] body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  /* Ben-Day halftone: a dense grid of small red dots on cream */
+  background-image:
+    radial-gradient(circle, rgba(230,57,74,0.35) 1.6px, transparent 2px);
+  background-size: 14px 14px;
+  background-attachment: fixed;
+}
+
+html[data-theme="comic"].dark body {
+  background-color: #0F0F0F;
+  color: var(--color-paper);
+  background-image:
+    radial-gradient(circle, rgba(255,214,10,0.22) 1.6px, transparent 2px);
+  background-size: 14px 14px;
+  background-attachment: fixed;
+}
+
+html[data-theme="comic"] h1,
+html[data-theme="comic"] h2,
+html[data-theme="comic"] h3,
+html[data-theme="comic"] .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.02em;
+  line-height: 1.0;
+  text-transform: uppercase;
+  -webkit-text-stroke: 1px var(--color-ink);
+}
+
+html[data-theme="comic"] section > h2 {
+  display: inline-block;
+  width: fit-content;
+  align-self: flex-start;
+  background: var(--color-mustard);
+  padding: 2px 14px;
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  color: var(--color-ink);
+  transform: rotate(-2deg);
+}
+
+/* Comic body font is more handwritten — bump base size for legibility */
+html[data-theme="comic"] body {
+  font-size: 1.03rem;
+}
+
+/* Form labels need to punch through the halftone dot background. */
+html[data-theme="comic"] label {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+html[data-theme="comic"] label > span:first-child,
+html[data-theme="comic"] label:not(:has(input[type="checkbox"], input[type="radio"])) {
+  text-shadow:
+    0 0 2px var(--color-paper),
+    0 0 2px var(--color-paper),
+    0 0 2px var(--color-paper);
+}
+html[data-theme="comic"].dark label {
+  color: var(--color-paper);
+}
+html[data-theme="comic"].dark label:not(:has(input[type="checkbox"], input[type="radio"])) {
+  text-shadow:
+    0 0 2px #0F0F0F,
+    0 0 2px #0F0F0F,
+    0 0 2px #0F0F0F;
+}
+
+/* ============================================================
+   THEME: xp — Windows XP Luna. Beige chrome, blue Luna title
+   bars, 3D beveled panels, Tahoma 11px, Bliss sky background.
+   ============================================================ */
+html[data-theme="xp"] {
+  --color-paper: #ECE9D8;          /* classic beige window chrome */
+  --color-ink: #000000;
+  --color-accent: #0A246A;         /* Luna deep blue */
+  --color-cyan: #316AC5;           /* XP selection blue */
+  --color-mustard: #FFC800;        /* highlight yellow */
+  --color-mint: #73A954;           /* Start-button green */
+  --color-grape: #245EDC;          /* Luna title-bar mid blue */
+  --font-sans: "Tahoma", "Trebuchet MS", "Segoe UI", sans-serif;
+  --font-display: "Trebuchet MS", "Tahoma", sans-serif;
+}
+
+html[data-theme="xp"] body {
+  background-color: #3A6EA5;       /* classic XP teal-blue desktop */
+  color: var(--color-ink);
+  background-image:
+    linear-gradient(180deg, #5A8BC2 0%, #3A6EA5 55%, #2F5A89 100%);
+  background-attachment: fixed;
+  font-family: var(--font-sans);
+  font-size: 11px;
+}
+
+html[data-theme="xp"].dark body {
+  background-color: #0a1b2e;
+  color: var(--color-paper);
+  background-image: linear-gradient(180deg, #1a3250 0%, #0a1b2e 100%);
+  background-attachment: fixed;
+}
+
+html[data-theme="xp"] h1,
+html[data-theme="xp"] h2,
+html[data-theme="xp"] h3,
+html[data-theme="xp"] .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0;
+  line-height: 1.2;
+  text-transform: none;
+  font-weight: bold;
+}
+
+/* Luna title-bar for section headings */
+html[data-theme="xp"] section > h2 {
+  display: block;
+  width: auto;
+  margin: 0;
+  padding: 4px 8px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+  text-shadow: 1px 1px 0 rgba(0,0,0,0.35);
+  background:
+    linear-gradient(180deg,
+      #0831D9 0%,
+      #1151E4 8%,
+      #2169E8 40%,
+      #1E62E2 88%,
+      #0A3EC5 100%);
+  border: 1px solid #0A246A;
+  border-radius: 6px 6px 0 0;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.5);
+}
+
+/* XP form panels — beige with 3D raised bevel */
+html[data-theme="xp"] li.rounded-xl,
+html[data-theme="xp"] section.rounded-xl,
+html[data-theme="xp"] div.rounded-xl,
+html[data-theme="xp"] article.rounded-xl,
+html[data-theme="xp"] p.rounded-xl {
+  background-color: var(--color-paper);
+  border: 1px solid #919B9C !important;
+  border-radius: 3px;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #ACA899,
+    1px 1px 2px rgba(0,0,0,0.25) !important;
+}
+
+/* XP inputs — sunken 3D bevel */
+html[data-theme="xp"] input[type="text"],
+html[data-theme="xp"] input[type="email"],
+html[data-theme="xp"] input[type="url"],
+html[data-theme="xp"] input[type="search"],
+html[data-theme="xp"] input[type="password"],
+html[data-theme="xp"] input[type="number"],
+html[data-theme="xp"] input[type="date"],
+html[data-theme="xp"] input[type="time"],
+html[data-theme="xp"] input[type="datetime-local"],
+html[data-theme="xp"] input:not([type]),
+html[data-theme="xp"] textarea,
+html[data-theme="xp"] select {
+  background: #fff;
+  border: 1px solid #7F9DB9 !important;
+  border-radius: 0;
+  padding: 3px 5px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  box-shadow:
+    inset 1px 1px 0 #ACA899,
+    inset -1px -1px 0 #fff;
+}
+html[data-theme="xp"] input:focus,
+html[data-theme="xp"] textarea:focus,
+html[data-theme="xp"] select:focus {
+  outline: 1px dotted var(--color-ink);
+  outline-offset: -3px;
+  border-color: #0A246A !important;
+}
+
+/* XP buttons — raised beige bevel */
+html[data-theme="xp"] a.rounded-full,
+html[data-theme="xp"] button.rounded-full {
+  background: linear-gradient(180deg, #FDFDFC 0%, #E6E2D2 100%) !important;
+  color: var(--color-ink) !important;
+  border: 1px solid #003C74 !important;
+  border-radius: 3px;
+  padding: 2px 10px;
+  font-family: var(--font-sans);
+  font-size: 11px;
+  font-weight: normal;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #ACA899 !important;
+  text-shadow: none;
+}
+html[data-theme="xp"] a.rounded-full:hover,
+html[data-theme="xp"] button.rounded-full:hover {
+  background: linear-gradient(180deg, #FFFFFF 0%, #ECE9D8 100%) !important;
+  transform: none;
+  box-shadow:
+    inset 1px 1px 0 #fff,
+    inset -1px -1px 0 #ACA899,
+    0 0 0 1px #FFB700 !important;
+}
+html[data-theme="xp"] a.rounded-full:active,
+html[data-theme="xp"] button.rounded-full:active {
+  background: linear-gradient(180deg, #E6E2D2 0%, #FDFDFC 100%) !important;
+  transform: none;
+  box-shadow:
+    inset 1px 1px 0 #ACA899,
+    inset -1px -1px 0 #fff !important;
+}
+
+/* Links in XP are classic blue underlined */
+html[data-theme="xp"] a:where(:not(.rounded-full):not(.rounded-xl):not(.no-underline)) {
+  color: #0000EE;
+  text-decoration: underline;
+  text-decoration-color: #0000EE;
+}
+html[data-theme="xp"] a:where(:not(.rounded-full):not(.rounded-xl)):hover {
+  color: #0000AA;
+  text-decoration-color: #0000AA;
+}
+
+/* ============================================================
+   THEME: deco — Art Deco. Gold on deep ink, geometric sunbursts,
+   Poiret / Limelight display, ivory serif body, chevron borders.
+   ============================================================ */
+html[data-theme="deco"] {
+  --color-paper: #F3EBD3;          /* ivory */
+  --color-ink: #0B1B2B;            /* midnight navy-black */
+  --color-accent: #C9A961;         /* champagne gold */
+  --color-cyan: #1F6B5E;           /* deep emerald */
+  --color-mustard: #D4AF37;        /* classic gold */
+  --color-mint: #4A7C7E;           /* oxidized teal */
+  --color-grape: #6B1F2E;          /* burgundy */
+  --font-sans: "Playfair Display", "EB Garamond", Georgia, serif;
+  --font-display: "Limelight", "Poiret One", "Playfair Display", serif;
+}
+
+html[data-theme="deco"] body {
+  background-color: var(--color-ink);
+  color: var(--color-paper);
+  background-image:
+    repeating-linear-gradient(135deg,
+      rgba(201,169,97,0.06) 0 2px,
+      transparent 2px 24px),
+    repeating-linear-gradient(45deg,
+      rgba(201,169,97,0.06) 0 2px,
+      transparent 2px 24px),
+    radial-gradient(ellipse at top,
+      rgba(201,169,97,0.14) 0%,
+      transparent 55%);
+  background-attachment: fixed;
+}
+
+html[data-theme="deco"].dark body {
+  background-color: #050B14;
+  color: var(--color-paper);
+}
+
+html[data-theme="deco"] h1,
+html[data-theme="deco"] h2,
+html[data-theme="deco"] h3,
+html[data-theme="deco"] .font-display {
+  font-family: var(--font-display);
+  letter-spacing: 0.14em;
+  line-height: 1.1;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  font-weight: 400;
+}
+
+/* Section titles: gold text framed by double rule above and below */
+html[data-theme="deco"] section > h2 {
+  display: inline-block;
+  width: fit-content;
+  align-self: flex-start;
+  padding: 10px 24px;
+  margin: 4px 0;
+  color: var(--color-accent);
+  background: transparent;
+  border: none;
+  box-shadow:
+    0 -3px 0 var(--color-accent),
+    0 -7px 0 var(--color-ink),
+    0 -8px 0 var(--color-accent),
+    0 3px 0 var(--color-accent),
+    0 7px 0 var(--color-ink),
+    0 8px 0 var(--color-accent);
+  text-shadow: 0 0 12px rgba(201,169,97,0.3);
+}
+
+/* Deco panels — ivory parchment with gold double-rule border */
+html[data-theme="deco"] li.rounded-xl,
+html[data-theme="deco"] section.rounded-xl,
+html[data-theme="deco"] div.rounded-xl,
+html[data-theme="deco"] article.rounded-xl,
+html[data-theme="deco"] p.rounded-xl {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-accent) !important;
+  border-radius: 2px;
+  box-shadow:
+    0 0 0 3px var(--color-ink),
+    0 0 0 4px var(--color-accent),
+    0 10px 30px rgba(0,0,0,0.4) !important;
+  padding: 1.25rem;
+}
+
+/* Buttons — gold outline on ink, uppercase serif, letter-spaced */
+html[data-theme="deco"] a.rounded-full,
+html[data-theme="deco"] button.rounded-full {
+  background: var(--color-ink) !important;
+  color: var(--color-accent) !important;
+  border: 2px solid var(--color-accent) !important;
+  border-radius: 2px;
+  padding: 6px 18px;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-weight: 400;
+  box-shadow:
+    inset 0 0 0 1px var(--color-ink),
+    inset 0 0 0 3px var(--color-accent) !important;
+  text-shadow: none;
+}
+html[data-theme="deco"] a.rounded-full:hover,
+html[data-theme="deco"] button.rounded-full:hover {
+  background: var(--color-accent) !important;
+  color: var(--color-ink) !important;
+  transform: none;
+  box-shadow:
+    inset 0 0 0 1px var(--color-accent),
+    inset 0 0 0 3px var(--color-ink) !important;
+}
+html[data-theme="deco"] a.rounded-full:active,
+html[data-theme="deco"] button.rounded-full:active {
+  transform: translateY(1px);
+}
+
+/* Form inputs — ivory field with gold underline, no border */
+html[data-theme="deco"] input[type="text"],
+html[data-theme="deco"] input[type="email"],
+html[data-theme="deco"] input[type="url"],
+html[data-theme="deco"] input[type="search"],
+html[data-theme="deco"] input[type="password"],
+html[data-theme="deco"] input[type="number"],
+html[data-theme="deco"] input[type="date"],
+html[data-theme="deco"] input[type="time"],
+html[data-theme="deco"] input[type="datetime-local"],
+html[data-theme="deco"] input:not([type]),
+html[data-theme="deco"] textarea,
+html[data-theme="deco"] select {
+  background: var(--color-paper);
+  color: var(--color-ink);
+  border: 1px solid var(--color-accent) !important;
+  border-radius: 2px;
+  padding: 8px 12px;
+  font-family: var(--font-sans);
+  box-shadow: inset 0 -2px 0 var(--color-accent);
+}
+html[data-theme="deco"] input:focus,
+html[data-theme="deco"] textarea:focus,
+html[data-theme="deco"] select:focus {
+  outline: none;
+  border-color: var(--color-mustard) !important;
+  box-shadow:
+    inset 0 -2px 0 var(--color-mustard),
+    0 0 0 2px rgba(212,175,55,0.3);
+}
+
+/* Labels in gold against the ink background */
+html[data-theme="deco"] label {
+  color: var(--color-accent);
+  font-family: var(--font-sans);
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-size: 0.72rem;
+}
+/* But labels inside ivory panels revert to ink */
+html[data-theme="deco"] .rounded-xl label {
+  color: var(--color-ink);
+}
+
+/* Links — gold with gold underline, hover brightens */
+html[data-theme="deco"] a:where(:not(.rounded-full):not(.rounded-xl):not(.no-underline)) {
+  color: var(--color-accent);
+  text-decoration-color: var(--color-accent);
+}
+html[data-theme="deco"] a:where(:not(.rounded-full):not(.rounded-xl)):hover {
+  color: var(--color-mustard);
+  text-decoration-color: var(--color-mustard);
+}
+
+/* Muted helper text and nav items. On the dark navy body these need
+   to stay as readable gold instead of fading toward the background.
+   Inside ivory panels (.rounded-xl …) they use a muted ink instead. */
+html[data-theme="deco"] .opacity-60,
+html[data-theme="deco"] .opacity-70,
+html[data-theme="deco"] .opacity-80 {
+  opacity: 1;
+  color: #D9BE7A;
+}
+html[data-theme="deco"] .rounded-xl .opacity-60,
+html[data-theme="deco"] .rounded-xl .opacity-70,
+html[data-theme="deco"] .rounded-xl .opacity-80 {
+  color: #4B3A1F;
+}
+
+/* Sign out / Log in buttons in the nav read as gold text */
+html[data-theme="deco"] nav button[type="submit"],
+html[data-theme="deco"] nav a {
+  color: var(--color-accent);
+}
+html[data-theme="deco"] nav button[type="submit"]:hover,
+html[data-theme="deco"] nav a:hover {
+  color: var(--color-mustard);
+}
+
+/* ============================================================
+   SHARED SKELETON — applies to any theme because both themes
+   share the "thick-outline + hard-shadow" structural language.
+   ============================================================ */
+
+h4, h5, h6 { font-family: var(--font-sans); font-weight: 800; }
+
+a:where(:not(.rounded-full):not(.rounded-xl):not(.no-underline)) {
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+  text-decoration-color: var(--color-accent);
+}
+a:where(:not(.rounded-full):not(.rounded-xl)):hover {
+  text-decoration-color: var(--color-cyan);
+}
+
+a.rounded-full,
+button.rounded-full {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 3px solid var(--color-ink) !important;
+  box-shadow: 4px 4px 0 var(--color-ink);
+  text-decoration: none !important;
+  font-weight: 700;
+  transition: transform 80ms ease, box-shadow 80ms ease;
+}
+a.rounded-full:hover,
+button.rounded-full:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 6px 6px 0 var(--color-ink);
+}
+a.rounded-full:active,
+button.rounded-full:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0 var(--color-ink);
+}
+
+a.rounded-full:where(.border),
+button.rounded-full:where(.border) {
+  background-color: var(--color-cyan);
+  color: var(--color-ink) !important;
+}
+/* In comic theme the secondary button reads better as yellow */
+html[data-theme="comic"] a.rounded-full:where(.border),
+html[data-theme="comic"] button.rounded-full:where(.border) {
+  background-color: var(--color-mustard);
+}
+
+html.dark a.rounded-full,
+html.dark button.rounded-full {
+  box-shadow: 4px 4px 0 var(--color-paper);
+  border-color: var(--color-paper) !important;
+}
+html.dark a.rounded-full:hover,
+html.dark button.rounded-full:hover {
+  box-shadow: 6px 6px 0 var(--color-paper);
+}
+
+li.rounded-xl,
+section.rounded-xl,
+div.rounded-xl,
+article.rounded-xl,
+p.rounded-xl {
+  border: 3px solid var(--color-ink) !important;
+  box-shadow: 6px 6px 0 var(--color-ink);
+  background-color: var(--color-paper);
+}
+html.dark li.rounded-xl,
+html.dark section.rounded-xl,
+html.dark div.rounded-xl,
+html.dark article.rounded-xl,
+html.dark p.rounded-xl {
+  background-color: #1a1a1a;
+  box-shadow: 6px 6px 0 var(--color-accent);
+  border-color: var(--color-paper) !important;
+}
+
+img.rounded-md { border: 2px solid var(--color-ink); }
+html.dark img.rounded-md { border-color: var(--color-paper); }
+
+.border-black\/10,
+.border-black\/20,
+.border-dashed {
+  border-color: var(--color-ink) !important;
+}
+html.dark .border-white\/10,
+html.dark .border-white\/20 {
+  border-color: var(--color-paper) !important;
+}
+
+/* Stickers + chips. Rotations only apply in Memphis — the tilted
+   card look is Memphis's signature. Other themes keep them square. */
+html[data-theme="memphis"] .sticker-l { transform: rotate(-2deg); }
+html[data-theme="memphis"] .sticker-r { transform: rotate(2deg); }
+html[data-theme="memphis"] .sticker-xl { transform: rotate(-4deg); }
+
+.chip {
+  display: inline-block;
+  padding: 2px 10px;
+  border: 2px solid var(--color-ink);
+  box-shadow: 2px 2px 0 var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.chip-pink    { background: var(--color-accent);  color: #fff; }
+.chip-cyan    { background: var(--color-cyan);    color: #fff; }
+.chip-mustard { background: var(--color-mustard); color: var(--color-ink); }
+.chip-mint    { background: var(--color-mint);    color: var(--color-ink); }
+.chip-grape   { background: var(--color-grape);   color: #fff; }
+
+/* Decoration containers. Each decor layer is tagged with
+   .decor-memphis or .decor-comic; CSS hides the one that
+   doesn't match the active theme. */
+.memphis-decor,
+.comic-decor {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+.memphis-decor > *,
+.comic-decor > * { position: absolute; }
+
+html[data-theme="memphis"] .comic-decor { display: none; }
+html[data-theme="comic"] .memphis-decor { display: none; }
+html[data-theme="xp"] .memphis-decor,
+html[data-theme="xp"] .comic-decor,
+html[data-theme="deco"] .memphis-decor,
+html[data-theme="deco"] .comic-decor { display: none; }
+
+main, header, footer, nav { position: relative; z-index: 1; }
+
+/* ============================================================
+   Hidden theme picker — a 5x5 diamond toggle at the bottom-right
+   corner reveals a themed dropdown. Default-theme users see only
+   a near-invisible dot; the picker is for exploring the fancy
+   themes behind the scenes.
+   ============================================================ */
+.theme-picker-toggle {
+  position: fixed;
+  bottom: 8px;
+  right: 8px;
+  z-index: 50;
+  width: 5px;
+  height: 5px;
+  padding: 0;
+  border: none;
+  background: var(--color-ink);
+  opacity: 0.2;
+  transform: rotate(45deg);
+  cursor: pointer;
+  transition: opacity 120ms ease;
+}
+.theme-picker-toggle:hover { opacity: 0.9; }
+html.dark .theme-picker-toggle { background: var(--color-paper); }
+
+/* On themes whose body is dark the ink-colored diamond disappears.
+   Flip it to the paper tone + raise base opacity so it's always
+   just visible enough to find. */
+html[data-theme="deco"] .theme-picker-toggle,
+html[data-theme="xp"] .theme-picker-toggle {
+  background: var(--color-paper);
+  opacity: 0.35;
+}
+html[data-theme="deco"] .theme-picker-toggle:hover,
+html[data-theme="xp"] .theme-picker-toggle:hover { opacity: 1; }
+
+.theme-picker {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  background: var(--color-paper);
+  border: 3px solid var(--color-ink);
+  box-shadow: 4px 4px 0 var(--color-ink);
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+}
+/* In the clean default theme the picker reads as a plain popover */
+html[data-theme="default"] .theme-picker {
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 4px 16px rgba(15, 23, 42, 0.1);
+  background: #FFFFFF;
+  text-transform: none;
+  letter-spacing: 0;
+  font-family: var(--font-sans);
+}
+.theme-picker label { cursor: pointer; }
+.theme-picker select {
+  font-family: var(--font-display);
+  font-size: 0.72rem;
+  padding: 3px 8px;
+  border: 2px solid var(--color-ink);
+  background: #fff;
+  color: var(--color-ink);
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+html.dark .theme-picker {
+  background: #1a1a1a;
+  border-color: var(--color-paper);
+  box-shadow: 4px 4px 0 var(--color-paper);
+  color: var(--color-paper);
+}
+html.dark .theme-picker select {
+  background: #0F0F0F;
+  color: var(--color-paper);
+  border-color: var(--color-paper);
 }
