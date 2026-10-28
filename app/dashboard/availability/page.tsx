@@ -18,13 +18,6 @@ function todayIso() {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 }
 
-const dateFmt = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-});
-const fmt = (iso: string) => dateFmt.format(new Date(`${iso}T00:00:00`));
 const timeFmt = new Intl.DateTimeFormat("en-US", {
   month: "short",
   day: "numeric",
