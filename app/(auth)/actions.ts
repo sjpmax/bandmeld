@@ -35,7 +35,11 @@ export async function signUp(_prev: ActionResult, formData: FormData): Promise<A
   if (password.length < 8) return { ok: false, error: "Password must be at least 8 characters." };
 
   const supabase = await createClient();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+  const siteUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL
+      ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+      : "http://localhost:3000");
 
   const { data, error } = await supabase.auth.signUp({
     email,
