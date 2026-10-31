@@ -58,6 +58,10 @@ export default async function PollsListPage({
           </Link>
         </header>
 
+        <p className="rounded-xl border border-black/10 bg-black/5 p-3 text-sm opacity-80 dark:border-white/10 dark:bg-white/5">
+          Each member gets a personal link — no login needed. When you close a poll, every <strong>&ldquo;No&rdquo;</strong> answer is added as a one-day unavailability on that member&rsquo;s calendar, and the band&rsquo;s open dates update automatically. <strong>Yes</strong> answers don&rsquo;t change anything. Polls don&rsquo;t auto-close when their deadline passes — open the poll and click <em>Close &amp; apply to calendar</em> when you&rsquo;re ready.
+        </p>
+
         {!polls || polls.length === 0 ? (
           <p className="rounded-xl border border-black/10 p-6 text-sm opacity-70 dark:border-white/10">
             No polls yet. Hit <strong>Ask the band</strong> to send one.

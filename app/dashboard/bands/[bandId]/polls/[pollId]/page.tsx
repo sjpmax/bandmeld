@@ -9,6 +9,7 @@ import {
   type ResultsDate,
 } from "@/components/polls/poll-results-table";
 import { ClosePollButton } from "@/components/polls/close-poll-button";
+import { DeletePollButton } from "@/components/polls/delete-poll-button";
 import { BandSubNav } from "@/components/bands/band-subnav";
 
 export const metadata: Metadata = { title: "Poll results" };
@@ -124,7 +125,10 @@ export default async function PollResultsPage({
               {isClosed ? "Closed" : "Open"} · closes {new Date(poll.closes_at).toLocaleString()}
             </p>
           </div>
-          {!isClosed && <ClosePollButton bandId={bandId} pollId={pollId} />}
+          <div className="flex flex-wrap items-center gap-2">
+            {!isClosed && <ClosePollButton bandId={bandId} pollId={pollId} />}
+            <DeletePollButton bandId={bandId} pollId={pollId} />
+          </div>
         </header>
 
         {poll.note && (

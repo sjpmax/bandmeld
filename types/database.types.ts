@@ -545,6 +545,7 @@ export type Database = {
         }[]
       }
       delete_google_tokens: { Args: never; Returns: undefined }
+      delete_poll: { Args: { p_poll_id: string }; Returns: undefined }
       get_google_tokens: {
         Args: never
         Returns: {
