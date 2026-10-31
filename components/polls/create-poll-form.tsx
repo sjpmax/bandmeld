@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { createPollAction, type CreatePollResult } from "@/app/dashboard/bands/[bandId]/polls/new/actions";
-import { MonthDatePicker } from "@/components/polls/month-date-picker";
+import { SuggestedDatesPicker } from "@/components/polls/suggested-dates-picker";
 
 const MAX_DATES = 10;
 
@@ -67,9 +67,9 @@ export function CreatePollForm({ bandId }: { bandId: string }) {
       <div className="flex flex-col gap-2">
         <span className="text-sm font-medium">Dates</span>
         <p className="text-xs opacity-70">
-          Tap days to add them. Tap a weekday chip (Sun, Mon…) to toggle every one of those days in the month.
+          Tap an upcoming date to add it to the poll. Flip weekday chips above the list if you want more than just Fri/Sat.
         </p>
-        <MonthDatePicker value={dates} onChange={setDates} max={MAX_DATES} />
+        <SuggestedDatesPicker value={dates} onChange={setDates} max={MAX_DATES} />
       </div>
 
       <button
