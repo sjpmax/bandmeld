@@ -27,7 +27,9 @@ export function buildPollInviteEmail(args: PollInviteTemplateArgs): {
   html: string;
   text: string;
 } {
-  const title = args.pollTitle?.trim() || `Availability check for ${args.bandName}`;
+  const trimmedPollTitle = args.pollTitle?.trim() || null;
+  const bodyTitle = trimmedPollTitle ?? `Availability check for ${args.bandName}`;
+  const subject = `${args.bandName}: ${trimmedPollTitle ?? "are you available for these dates?"}`;
   const dateLines = args.dates.map((d) => `  • ${fmt(d)}`).join("\n");
   const closesLine = `This link stays open until ${fmt(args.closesAt.slice(0, 10))}.`;
 
@@ -46,7 +48,7 @@ export function buildPollInviteEmail(args: PollInviteTemplateArgs): {
 
   const html =
     `<!doctype html><html><body style="font-family:-apple-system,Segoe UI,Roboto,sans-serif;line-height:1.5;color:#111;max-width:560px;margin:0 auto;padding:24px;">` +
-    `<h1 style="font-size:20px;margin:0 0 12px;">${escapeHtml(title)}</h1>` +
+    `<h1 style="font-size:20px;margin:0 0 12px;">${escapeHtml(bodyTitle)}</h1>` +
     `<p>Hi ${escapeHtml(args.memberName)},</p>` +
     `<p><strong>${escapeHtml(args.bandName)}</strong> is checking availability for these dates:</p>` +
     `<ul>${htmlDates}</ul>` +
@@ -57,7 +59,7 @@ export function buildPollInviteEmail(args: PollInviteTemplateArgs): {
     `<p style="color:#555;font-size:14px;">${escapeHtml(closesLine)} You can revisit the link and change your answer any time before it closes.</p>` +
     `</body></html>`;
 
-  return { subject: title, html, text };
+  return { subject, html, text };
 }
 
 function escapeHtml(s: string): string {

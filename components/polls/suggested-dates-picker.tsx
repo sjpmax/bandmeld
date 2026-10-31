@@ -88,8 +88,8 @@ export function SuggestedDatesPicker({
                 onClick={() => toggleWeekday(i)}
                 className={
                   on
-                    ? "rounded-full border border-accent bg-accent px-3 py-1 text-xs font-semibold text-white"
-                    : "rounded-full border border-black/15 px-3 py-1 text-xs font-semibold opacity-70 hover:opacity-100 dark:border-white/15"
+                    ? "rounded-md border border-accent bg-accent px-3 py-1 text-xs font-semibold text-white shadow-none"
+                    : "rounded-md border border-black/15 bg-transparent px-3 py-1 text-xs font-semibold opacity-70 hover:opacity-100 dark:border-white/15"
                 }
                 aria-pressed={on}
               >
@@ -119,10 +119,10 @@ export function SuggestedDatesPicker({
                   aria-pressed={isSelected}
                   className={
                     isSelected
-                      ? "rounded-full border border-accent bg-accent px-3 py-1.5 text-sm font-semibold text-white"
+                      ? "rounded-md border-2 border-accent bg-accent px-3 py-1.5 text-sm font-semibold text-white shadow-none"
                       : disabled
-                        ? "cursor-not-allowed rounded-full border border-black/10 px-3 py-1.5 text-sm opacity-40 dark:border-white/10"
-                        : "rounded-full border border-black/15 px-3 py-1.5 text-sm hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/5"
+                        ? "cursor-not-allowed rounded-md border border-black/10 bg-transparent px-3 py-1.5 text-sm opacity-40 dark:border-white/10"
+                        : "rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/5"
                   }
                 >
                   {chipFmt.format(d)}
