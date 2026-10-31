@@ -20,11 +20,41 @@ function startOfToday(): Date {
   return n;
 }
 
-const chipFmt = new Intl.DateTimeFormat("en-US", {
-  weekday: "short",
-  month: "short",
-  day: "numeric",
-});
+const chipDayFmt = new Intl.DateTimeFormat("en-US", { weekday: "short" });
+const monthHeaderFmt = new Intl.DateTimeFormat("en-US", { month: "long" });
+
+function weekKey(d: Date): string {
+  // Sunday-of-week local key for grouping — not timezone-sensitive.
+  const sunday = new Date(d);
+  sunday.setDate(d.getDate() - d.getDay());
+  return toIsoLocal(sunday);
+}
+
+type MonthGroup = {
+  key: string;
+  label: string;
+  weeks: { key: string; days: Date[] }[];
+};
+
+function groupByMonth(dates: Date[]): MonthGroup[] {
+  const months: MonthGroup[] = [];
+  for (const d of dates) {
+    const mKey = `${d.getFullYear()}-${d.getMonth()}`;
+    let month = months[months.length - 1];
+    if (!month || month.key !== mKey) {
+      month = { key: mKey, label: monthHeaderFmt.format(d), weeks: [] };
+      months.push(month);
+    }
+    const wKey = weekKey(d);
+    let week = month.weeks[month.weeks.length - 1];
+    if (!week || week.key !== wKey) {
+      week = { key: wKey, days: [] };
+      month.weeks.push(week);
+    }
+    week.days.push(d);
+  }
+  return months;
+}
 
 export function SuggestedDatesPicker({
   value,
@@ -105,32 +135,44 @@ export function SuggestedDatesPicker({
           Pick at least one weekday above to see dates.
         </p>
       ) : (
-        <ul className="flex flex-wrap gap-2">
-          {upcomingDates.map((d) => {
-            const iso = toIsoLocal(d);
-            const isSelected = selected.has(iso);
-            const disabled = atCap && !isSelected;
-            return (
-              <li key={iso}>
-                <button
-                  type="button"
-                  disabled={disabled}
-                  onClick={() => toggleDate(iso)}
-                  aria-pressed={isSelected}
-                  className={
-                    isSelected
-                      ? "rounded-md border-2 border-accent bg-accent px-3 py-1.5 text-sm font-semibold text-white shadow-none"
-                      : disabled
-                        ? "cursor-not-allowed rounded-md border border-black/10 bg-transparent px-3 py-1.5 text-sm opacity-40 dark:border-white/10"
-                        : "rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/5"
-                  }
-                >
-                  {chipFmt.format(d)}
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex flex-col gap-4">
+          {groupByMonth(upcomingDates).map((month) => (
+            <section key={month.key} className="flex flex-col gap-2">
+              <h3 className="text-sm font-semibold uppercase tracking-wide opacity-70">
+                {month.label}
+              </h3>
+              <div className="flex flex-col gap-1.5">
+                {month.weeks.map((week) => (
+                  <div key={week.key} className="flex flex-wrap gap-2">
+                    {week.days.map((d) => {
+                      const iso = toIsoLocal(d);
+                      const isSelected = selected.has(iso);
+                      const disabled = atCap && !isSelected;
+                      return (
+                        <button
+                          key={iso}
+                          type="button"
+                          disabled={disabled}
+                          onClick={() => toggleDate(iso)}
+                          aria-pressed={isSelected}
+                          className={
+                            isSelected
+                              ? "rounded-md border-2 border-accent bg-accent px-3 py-1.5 text-sm font-semibold text-white shadow-none"
+                              : disabled
+                                ? "cursor-not-allowed rounded-md border border-black/10 bg-transparent px-3 py-1.5 text-sm opacity-40 dark:border-white/10"
+                                : "rounded-md border border-black/15 bg-transparent px-3 py-1.5 text-sm hover:bg-black/5 dark:border-white/15 dark:hover:bg-white/5"
+                          }
+                        >
+                          {chipDayFmt.format(d)} {d.getDate()}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
       )}
 
       <div className="flex items-center justify-between gap-3 text-sm">
